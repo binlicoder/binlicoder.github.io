@@ -17,3 +17,18 @@
 /* 首页三栏与信息卡片 */
 #content-inner.home-three-column{display:grid;grid-template-columns:224px minmax(0,1fr) 224px;align-items:start;gap:14px;max-width:1240px}#content-inner.home-three-column #aside-content{grid-column:1;grid-row:1;width:auto}#content-inner.home-three-column #recent-posts{grid-column:2;grid-row:1;width:auto;min-width:0}#content-inner.home-three-column .home-right{grid-column:3;grid-row:1;display:grid;gap:14px;min-width:0}.home-category-nav{display:flex;gap:8px;overflow-x:auto;padding:9px;margin-bottom:14px;background:var(--card-bg);border-radius:16px}.home-category-nav a{flex:none;white-space:nowrap;padding:5px 13px;border-radius:22px;background:#141017;color:var(--font-color)}.home-category-nav a:first-child{background:#d7b9e4;color:#34283b}.home-category-nav a:hover{background:#765b81;color:#fff}.home-widget{background:var(--card-bg);border-radius:14px;padding:18px;box-shadow:none;color:var(--font-color);font-size:.85rem}.home-widget h2{font-size:1rem;margin:0 0 14px;border-left:4px solid #d7b9e4;padding-left:9px;line-height:1.2}.home-stats dl{margin:0}.home-stats dl div{display:flex;align-items:baseline;gap:10px;padding:8px 0}.home-stats dt{white-space:nowrap}.home-stats dt:after{content:'';display:inline-block;width:0}.home-stats dd{margin:0 0 0 auto;font-weight:700;color:var(--text-highlight-color)}#content-inner.home-three-column #recent-posts .recent-post-item{border-radius:16px;min-height:200px}#content-inner.home-three-column #recent-posts .recent-post-info{font-size:.9rem}#content-inner.home-three-column #recent-posts .article-title{font-size:1.25rem}@media(max-width:1150px){#content-inner.home-three-column{grid-template-columns:210px minmax(0,1fr)}#content-inner.home-three-column .home-right{display:none}}@media(max-width:768px){#content-inner.home-three-column{display:flex;flex-direction:column}#content-inner.home-three-column #recent-posts{order:1;width:100%}#content-inner.home-three-column #aside-content{order:2;width:100%}#content-inner.home-three-column .home-right{order:3;display:grid;width:100%}}
 #body-wrap.post #page-header:after{inset:0;border-radius:0;opacity:1;background-image:linear-gradient(0deg,rgba(13,10,17,.88),rgba(16,12,22,.5)),var(--article-hero-image,linear-gradient(135deg,#292136,#110d17));background-size:cover;background-position:center}
+
+/* 首页文章列表与分页间距 */
+#content-inner.home-three-column{column-gap:18px}
+#content-inner.home-three-column .home-category-nav{margin-bottom:16px}
+#content-inner.home-three-column .recent-post-items{display:flex;flex-direction:column;gap:16px}
+#content-inner.home-three-column #recent-posts .recent-post-item{margin:0;min-height:190px}
+#content-inner.home-three-column #recent-posts .recent-post-info{padding:22px 26px;line-height:1.7}
+#content-inner.home-three-column #recent-posts .article-title{line-height:1.4}
+#content-inner.home-three-column #recent-posts .article-meta-wrap{margin:8px 0}
+#content-inner.home-three-column #recent-posts .content{line-height:1.7}
+#content-inner.home-three-column #pagination{margin:22px 0 8px}
+#content-inner.home-three-column #aside-content .card-widget{margin-top:16px}
+#content-inner.home-three-column #aside-content .card-widget:first-child{margin-top:0}
+#content-inner.home-three-column .home-right{gap:16px}
+@media(max-width:768px){#content-inner.home-three-column #recent-posts .recent-post-info{padding:20px}#content-inner.home-three-column .recent-post-items{gap:14px}}
