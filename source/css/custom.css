@@ -36,3 +36,12 @@
 /* Homebrew 封面完整居中，背景用同一图片柔化填充。 */
 #body-wrap.post #page-header.homebrew-cover:before{content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(14,12,19,.72),rgba(14,12,19,.72)),var(--article-hero-image) center / cover no-repeat!important;filter:blur(18px);z-index:0}
 #body-wrap.post #page-header.homebrew-cover:after{inset:0;background-image:linear-gradient(rgba(14,12,19,.27),rgba(14,12,19,.52)),var(--article-hero-image);background-size:100% 100%,auto 100%;background-position:center;background-repeat:no-repeat;z-index:0}
+
+/* 文章页的彩色圆角横幅 */
+#body-wrap.post #page-header{height:clamp(360px,65vh,760px)!important;background:#090909!important}
+#body-wrap.post #page-header:before{display:none}
+#body-wrap.post #page-header:after{content:"";position:absolute;inset:24px 0 0;background: url('/img/article-banner.svg') center top / auto 100% no-repeat;opacity:1;border-radius:0;z-index:0}
+#body-wrap.post .article-hero{inset:60px 24px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:32px}
+#body-wrap.post .article-hero-title{max-width:1100px;line-height:1.3;font-size:clamp(1.8rem,3vw,3.2rem)}
+#body-wrap.post .article-hero-date{margin-top:24px}
+@media(max-width:768px){#body-wrap.post #page-header{height:360px!important}#body-wrap.post #page-header:after{inset:45px 0 0;background-size:auto 100%}#body-wrap.post .article-hero{inset:60px 20px 0}#body-wrap.post .article-hero-title{font-size:1.8rem}}
