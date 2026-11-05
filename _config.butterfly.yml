@@ -1,0 +1,51 @@
+menu:
+  首页: / || fas fa-home
+  归档: /archives/ || fas fa-archive
+  关于: /about/ || fas fa-circle-info
+social:
+  fab fa-github: https://github.com/binlicoder || GitHub
+avatar:
+  img: /img/profile-transparent.png
+  effect: false
+index_img: false
+disable_top_img: false
+background: '#100d13'
+cover:
+  index_enable: true
+  aside_enable: false
+  archives_enable: false
+  default_cover:
+    - /img/cover.svg
+index_top_img_height: 300px
+subtitle:
+  enable: true
+  effect: false
+  source: false
+  sub:
+    - 代码有迹，岁月有痕。
+aside:
+  position: left
+  card_author:
+    enable: true
+    description: 一个程序员的技术探索、生活记录与成长手记。
+    button:
+      enable: true
+      icon: fab fa-github
+      text: GitHub
+      link: https://github.com/binlicoder
+  card_announcement:
+    enable: false
+  card_webinfo:
+    enable: true
+darkmode:
+  enable: true
+  button: true
+  autoChangeMode: false
+inject:
+  head:
+    - <script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script>
+    - <link rel="stylesheet" href="/css/custom.css?v=20261105e">
+  bottom:
+    - <script src="/js/article-layout.js?v=20261105e" defer></script>
+    - <script src="/js/music-player.js?v=20261105b" defer></script>
+    - <script src="/js/home-layout.js?v=20261105d" defer></script>
