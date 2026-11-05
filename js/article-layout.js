@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (header && title) {
     const hero = document.createElement('div');
     hero.className = 'article-hero';
+    const coverImage = document.querySelector('meta[property="og:image"]')?.content;
+    if (coverImage) header.style.setProperty('--article-hero-image', "url(" + JSON.stringify(coverImage) + ")");
     const heading = document.createElement('div');
     heading.className = 'article-hero-title';
     heading.textContent = title.textContent.trim();
