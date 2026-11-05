@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hero = document.createElement('div');
     hero.className = 'article-hero';
     const coverImage = document.querySelector('meta[property="og:image"]')?.content;
+    if (coverImage && new URL(coverImage, location.href).pathname === '/img/homebrew-cover.png') header.classList.add('homebrew-cover');
     if (coverImage) header.style.setProperty('--article-hero-image', "url(" + JSON.stringify(coverImage) + ")");
     const heading = document.createElement('div');
     heading.className = 'article-hero-title';
