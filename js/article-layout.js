@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const title = layout.querySelector('.post-title');
   const date = layout.querySelector('.post-meta-date-created');
   if (header && title) {
+    const coverImage = document.querySelector('meta[property="og:image"]')?.content;
+    if (coverImage && new URL(coverImage, location.href).pathname === '/img/homebrew-cover.png') header.classList.add('homebrew-cover');
     const hero = document.createElement('div');
     hero.className = 'article-hero';
     const heading = document.createElement('div');

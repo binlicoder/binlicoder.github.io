@@ -45,3 +45,7 @@
 #body-wrap.post .article-hero-title{max-width:1100px;line-height:1.3;font-size:clamp(1.8rem,3vw,3.2rem)}
 #body-wrap.post .article-hero-date{margin-top:24px}
 @media(max-width:768px){#body-wrap.post #page-header{height:360px!important}#body-wrap.post #page-header:after{inset:45px 0 0;background-size:auto 100%}#body-wrap.post .article-hero{inset:60px 20px 0}#body-wrap.post .article-hero-title{font-size:1.8rem}}
+
+/* Homebrew 文章横幅使用封面，完整显示主体并柔化两侧。 */
+#body-wrap.post #page-header.homebrew-cover:before{display:block;content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(12,12,15,.58),rgba(12,12,15,.68)),url('/img/homebrew-cover.png') center / cover no-repeat!important;filter:blur(20px);z-index:0}
+#body-wrap.post #page-header.homebrew-cover:after{inset:0;background-image:linear-gradient(rgba(12,12,15,.24),rgba(12,12,15,.48)),url('/img/homebrew-cover.png');background-position:center;background-size:100% 100%,auto 100%;background-repeat:no-repeat;opacity:1}
