@@ -32,3 +32,7 @@
 #content-inner.home-three-column #aside-content .card-widget:first-child{margin-top:0}
 #content-inner.home-three-column .home-right{gap:16px}
 @media(max-width:768px){#content-inner.home-three-column #recent-posts .recent-post-info{padding:20px}#content-inner.home-three-column .recent-post-items{gap:14px}}
+
+/* Homebrew 封面完整居中，背景用同一图片柔化填充。 */
+#body-wrap.post #page-header.homebrew-cover:before{content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(14,12,19,.72),rgba(14,12,19,.72)),var(--article-hero-image) center / cover no-repeat!important;filter:blur(18px);z-index:0}
+#body-wrap.post #page-header.homebrew-cover:after{inset:0;background-image:linear-gradient(rgba(14,12,19,.27),rgba(14,12,19,.52)),var(--article-hero-image);background-size:100% 100%,auto 100%;background-position:center;background-repeat:no-repeat;z-index:0}
