@@ -7,7 +7,7 @@ tags:
   - macOS
   - Homebrew
   - 开发工具
-cover: https://images.unsplash.com/photo-1649451844897-8699a1d6d96d?auto=format&fit=crop&w=1600&q=85
+cover: /img/homebrew-cover.png
 ---
 
 换了一台 Mac，安装开发工具时，手动寻找下载地址、拖动安装包、逐个检查更新，很快就会变成一件重复的事。Homebrew 可以用几条终端命令管理这些软件，让环境搭建更有条理。
@@ -188,4 +188,4 @@ brew doctor
 - [Homebrew 官网](https://brew.sh/)
 - [Homebrew 安装文档](https://docs.brew.sh/Installation)
 - [Homebrew 命令手册](https://docs.brew.sh/Manpage)
-- 封面摄影：Bernd Dittrich / [Unsplash](https://unsplash.com/photos/a-laptop-computer-sitting-on-top-of-a-desk-jG-jFEyKnqY)
+
