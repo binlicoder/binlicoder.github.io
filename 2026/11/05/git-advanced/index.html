@@ -1,0 +1,265 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Git 进阶实战：实习中常遇到的冲突、变基与撤销 | 落笔之间</title><meta name="author" content="binlicoder"><meta name="copyright" content="binlicoder"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="会提交代码之后，真正的协作问题才慢慢出现：代码写到一半需要切任务，拉取时遇到冲突，提交说明写错了，或者需要把某个修复带到另一个分支。 这篇是我的 Git 进阶笔记。建议先在练习仓库尝试，操作团队分支前先看清 git status，再确认团队约定。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Git 进阶实战：实习中常遇到的冲突、变基与撤销">
+<meta property="og:url" content="https://binlicoder.github.io/2026/11/05/git-advanced/index.html">
+<meta property="og:site_name" content="落笔之间">
+<meta property="og:description" content="会提交代码之后，真正的协作问题才慢慢出现：代码写到一半需要切任务，拉取时遇到冲突，提交说明写错了，或者需要把某个修复带到另一个分支。 这篇是我的 Git 进阶笔记。建议先在练习仓库尝试，操作团队分支前先看清 git status，再确认团队约定。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://images.unsplash.com/photo-1623520333087-62b8793e3d23?auto=format&fit=crop&w=1600&q=85">
+<meta property="article:published_time" content="2026-11-05T09:36:00.000Z">
+<meta property="article:modified_time" content="2026-11-05T09:35:41.024Z">
+<meta property="article:author" content="binlicoder">
+<meta property="article:tag" content="Git">
+<meta property="article:tag" content="团队协作">
+<meta property="article:tag" content="进阶教程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1623520333087-62b8793e3d23?auto=format&fit=crop&w=1600&q=85"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Git 进阶实战：实习中常遇到的冲突、变基与撤销",
+  "url": "https://binlicoder.github.io/2026/11/05/git-advanced/",
+  "image": "https://images.unsplash.com/photo-1623520333087-62b8793e3d23?auto=format&fit=crop&w=1600&q=85",
+  "datePublished": "2026-11-05T09:36:00.000Z",
+  "dateModified": "2026-11-05T09:35:41.024Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "binlicoder",
+      "url": "https://binlicoder.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://binlicoder.github.io/2026/11/05/git-advanced/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Git 进阶实战：实习中常遇到的冲突、变基与撤销',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script><link rel="stylesheet" href="/css/custom.css?v=20261105e"><meta name="generator" content="Hexo 8.1.2"></head><body><div class="bg-animation" id="web_bg" style="background-color: #100d13;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/profile-transparent.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">7</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-circle-info"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">落笔之间</span></a><a class="nav-page-title" href="/"><span class="site-name">Git 进阶实战：实习中常遇到的冲突、变基与撤销</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-circle-info"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">Git 进阶实战：实习中常遇到的冲突、变基与撤销</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-11-05T09:36:00.000Z" title="发表于 2026-11-05 17:36:00">2026-11-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-05T09:35:41.024Z" title="更新于 2026-11-05 17:35:41">2026-11-05</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%8A%80%E6%9C%AF%E5%BC%80%E5%8F%91/">技术开发</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div><article class="container post-content" id="article-container"><p>会提交代码之后，真正的协作问题才慢慢出现：代码写到一半需要切任务，拉取时遇到冲突，提交说明写错了，或者需要把某个修复带到另一个分支。</p>
+<p>这篇是我的 Git 进阶笔记。建议先在练习仓库尝试，操作团队分支前先看清 <code>git status</code>，再确认团队约定。</p>
+<span id="more"></span>
+
+<h2 id="fetch-和-pull-有什么区别"><a href="#fetch-和-pull-有什么区别" class="headerlink" title="fetch 和 pull 有什么区别"></a>fetch 和 pull 有什么区别</h2><p><code>git fetch</code> 下载远程更新，并更新本地的远程跟踪分支，不会自动把它们合并进当前分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git fetch origin</span><br><span class="line">git <span class="built_in">log</span> --oneline --graph --decorate --all</span><br></pre></td></tr></table></figure>
+
+<p><code>git pull</code> 会先获取更新，再按配置进行合并或变基。想先观察远程变化时，我通常先执行 <code>fetch</code>，再决定如何整合。</p>
+<h2 id="临时保存未完成的修改"><a href="#临时保存未完成的修改" class="headerlink" title="临时保存未完成的修改"></a>临时保存未完成的修改</h2><p>正在写功能，突然需要切去处理其他任务，可以使用 stash：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git stash push -u -m <span class="string">&quot;登录功能进行中&quot;</span></span><br><span class="line">git stash list</span><br></pre></td></tr></table></figure>
+
+<p><code>-u</code> 会包含未跟踪文件，默认不会包含被忽略的文件。任务处理完成后，回到原分支，先查看再恢复：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git stash show -p stash@&#123;0&#125;</span><br><span class="line">git stash apply stash@&#123;0&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>apply</code> 会保留这条 stash，确认恢复成功后可以执行 <code>git stash drop stash@{0}</code> 删除。恢复时也可能发生冲突，按照提示处理即可。Windows PowerShell 中可将 <code>stash@{0}</code> 用引号包起来。</p>
+<h2 id="解决合并冲突"><a href="#解决合并冲突" class="headerlink" title="解决合并冲突"></a>解决合并冲突</h2><p>当两个分支修改了同一处内容，Git 可能无法自动判断最终版本。合并停止后，先执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br></pre></td></tr></table></figure>
+
+<p>打开冲突文件，通常能看到类似下面的标记：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><br><span class="line">当前分支的内容</span><br><span class="line">=======</span><br><span class="line">合并进来的内容</span><br><span class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/login</span><br></pre></td></tr></table></figure>
+
+<p>与相关同事确认需要保留的内容，删除标记并保存。然后暂存解决后的文件，并完成合并：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add 冲突文件</span><br><span class="line">git merge --<span class="built_in">continue</span></span><br></pre></td></tr></table></figure>
+
+<p>如果决定取消这次尚未完成的合并，可以使用 <code>git merge --abort</code>。解决前先检查状态和已有修改，避免误以为所有冲突都已处理。</p>
+<h2 id="rebase：整理自己的功能分支"><a href="#rebase：整理自己的功能分支" class="headerlink" title="rebase：整理自己的功能分支"></a>rebase：整理自己的功能分支</h2><p>假设团队允许在自己的功能分支上变基，可以先获取远程更新，再把功能分支的提交重新应用到最新的 <code>origin/main</code> 上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git fetch origin</span><br><span class="line">git switch feature/login</span><br><span class="line">git rebase origin/main</span><br></pre></td></tr></table></figure>
+
+<p>遇到冲突时，编辑并保存文件，然后：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add 冲突文件</span><br><span class="line">git rebase --<span class="built_in">continue</span></span><br></pre></td></tr></table></figure>
+
+<p>如果需要取消整个变基过程，使用 <code>git rebase --abort</code>。</p>
+<p>变基会重写被重新应用的提交。已经与其他人共享的分支，先和团队确认再操作。<code>main</code>、<code>develop</code> 等共享分支尤其要遵守项目规则。</p>
+<h2 id="整理尚未共享的提交"><a href="#整理尚未共享的提交" class="headerlink" title="整理尚未共享的提交"></a>整理尚未共享的提交</h2><p>例如最近三个提交都属于同一个功能，可以在自己的分支上使用交互式变基：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase -i HEAD~3</span><br></pre></td></tr></table></figure>
+
+<p>编辑器会列出这三个提交。保留第一个提交的 <code>pick</code>，把需要合并进前一个提交的行改成 <code>squash</code>，保存退出后再按提示编辑提交说明。开始前确认这三个提交存在，并确认没有其他人依赖它们的原提交历史。</p>
+<h2 id="修改最近一次提交"><a href="#修改最近一次提交" class="headerlink" title="修改最近一次提交"></a>修改最近一次提交</h2><p>刚提交完，发现漏了一个文件，可以把文件暂存后补进最近一次提交：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add 漏掉的文件</span><br><span class="line">git commit --amend --no-edit</span><br></pre></td></tr></table></figure>
+
+<p>只想修改最近一次提交说明时，使用 <code>git commit --amend</code>。这会生成新的提交，适合处理尚未共享的提交。</p>
+<h2 id="已经推送的错误提交"><a href="#已经推送的错误提交" class="headerlink" title="已经推送的错误提交"></a>已经推送的错误提交</h2><p>如果一个错误提交已经被团队使用，通常可以使用 <code>revert</code> 创建一条反向提交，保留原有历史：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">log</span> --oneline</span><br><span class="line">git revert 提交哈希</span><br></pre></td></tr></table></figure>
+
+<p>执行后检查结果并按团队流程推送。涉及合并提交时，<code>revert</code> 需要指定主线父提交，先确认团队处理方式。</p>
+<h2 id="把单个修复带到当前分支"><a href="#把单个修复带到当前分支" class="headerlink" title="把单个修复带到当前分支"></a>把单个修复带到当前分支</h2><p>有时只需要另一个分支上的某一次修复，可以先查看提交，再使用 cherry-pick：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git show 提交哈希</span><br><span class="line">git cherry-pick 提交哈希</span><br></pre></td></tr></table></figure>
+
+<p>它会把该提交的变更应用到当前分支并生成新提交。若发生冲突，解决并 <code>git add</code> 后执行 <code>git cherry-pick --continue</code>。需要放弃时可以执行 <code>git cherry-pick --abort</code>。</p>
+<h2 id="推送被拒绝时"><a href="#推送被拒绝时" class="headerlink" title="推送被拒绝时"></a>推送被拒绝时</h2><p>推送被拒绝不一定是权限问题，也可能是远程分支已有新提交。先读取错误信息，再检查状态和远程历史：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git fetch origin</span><br><span class="line">git <span class="built_in">log</span> --oneline --graph --decorate --all</span><br></pre></td></tr></table></figure>
+
+<p>在自己的功能分支上重写历史后，团队可能允许使用 <code>git push --force-with-lease</code>。它会检查远程引用是否仍符合本地预期，降低覆盖他人更新的风险，但依然会改写远程历史。执行前先确认分支归属、团队规则和远程状态。</p>
+<h2 id="找回线索"><a href="#找回线索" class="headerlink" title="找回线索"></a>找回线索</h2><p>如果发现分支指针移动到了意料之外的位置，可以先查看本地引用记录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git reflog</span><br></pre></td></tr></table></figure>
+
+<p>记下相关提交哈希，用 <code>git show 提交哈希</code> 检查内容。确定要恢复什么之后，再选择创建新分支等方式保存现场。reflog 是本地记录，不能保证永久保留所有历史。</p>
+<h2 id="我给自己的协作习惯"><a href="#我给自己的协作习惯" class="headerlink" title="我给自己的协作习惯"></a>我给自己的协作习惯</h2><p>每次操作前先确认分支，提交前看差异，遇到不认识的提示先停下来读。修改共享历史、处理复杂冲突或准备覆盖远程分支时，及时和团队沟通。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://git-scm.com/docs">Git 参考手册</a>、<a target="_blank" rel="noopener" href="https://git-scm.com/docs/git-rebase">git-rebase</a>、<a target="_blank" rel="noopener" href="https://git-scm.com/docs/git-stash">git-stash</a>、<a target="_blank" rel="noopener" href="https://git-scm.com/docs/git-revert">git-revert</a>。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://binlicoder.github.io">binlicoder</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://binlicoder.github.io/2026/11/05/git-advanced/">https://binlicoder.github.io/2026/11/05/git-advanced/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://binlicoder.github.io" target="_blank">落笔之间</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Git/">Git</a><a class="post-meta__tags" href="/tags/%E8%BF%9B%E9%98%B6%E6%95%99%E7%A8%8B/">进阶教程</a><a class="post-meta__tags" href="/tags/%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C/">团队协作</a></div><div class="post-share"><div class="social-share" data-image="https://images.unsplash.com/photo-1623520333087-62b8793e3d23?auto=format&amp;fit=crop&amp;w=1600&amp;q=85" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/11/05/macos-homebrew-guide/" title="macOS 上手 Homebrew：让软件安装和更新更简单"><img class="cover" src="https://images.unsplash.com/photo-1649451844897-8699a1d6d96d?auto=format&amp;fit=crop&amp;w=1600&amp;q=85" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">macOS 上手 Homebrew：让软件安装和更新更简单</div></div><div class="info-2"><div class="info-item-1">换了一台 Mac，安装开发工具时，手动寻找下载地址、拖动安装包、逐个检查更新，很快就会变成一件重复的事。Homebrew 可以用几条终端命令管理这些软件，让环境搭建更有条理。 这篇文章从安装开始，记录日常最常用的 Homebrew 命令。   Homebrew 是什么Homebrew 是 macOS 上常用的软件包管理工具。它可以安装 Git、Node.js 等命令行工具，也可以通过 Cask 安装图形界面应用。  Formula 通常用于命令行工具和开发依赖。 Cask 用于安装预编译的软件，例如浏览器、编辑器和其他桌面应用。  安装前的准备打开 macOS 自带的「终端」。如果系统还没有安装 Apple 命令行开发工具，可以运行： 1xcode-select --install  按照系统提示完成安装。如果系统提示已经安装，就可以继续。 Homebrew 官方文档列出的当前支持环境是 macOS 15 或更新版本。Intel Mac 的支持级别和 Apple 芯片设备不同，使用较旧系统时可以先查看官方文档。 安装 Homebrew在终端运行 Homebrew 官网提供的安装命...</div></div></div></a><a class="pagination-related" href="/2026/11/05/git-basics/" title="Git 基础入门：实习生带你走完第一次提交"><img class="cover" src="https://images.unsplash.com/photo-1649451844897-8699a1d6d96d?auto=format&amp;fit=crop&amp;w=1600&amp;q=85" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Git 基础入门：实习生带你走完第一次提交</div></div><div class="info-2"><div class="info-item-1">刚开始实习时，我对 Git 的理解只有一句话：写完代码记得 add、commit、push。后来真正参与协作才发现，理解每一步在做什么，比背命令更重要。 这篇笔记会从零带你完成一次提交和推送。建议跟着创建一个练习目录，亲手操作一遍。   先认识 Git 和 GitHubGit 用来记录文件的变化，帮助我们查看历史、创建分支和合并修改。GitHub 是托管 Git 仓库的平台，团队可以在上面协作。 本地仓库保存在自己的电脑上，远程仓库通常保存在 GitHub 等平台。你可以先在本地提交，再把提交推送到远程。 安装和首次配置先在终端检查 Git 是否安装： 1git --version  如果没有安装，可以到 Git 官网下载安装。macOS 也可以用 Homebrew 安装 git。 第一次使用时设置提交者信息，把下面的内容换成自己的名字和邮箱： 12git config --global user.name &quot;你的名字&quot;git config --global user.email &quot;你的邮箱&quot;  查看配置： 1git config --gl...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/11/05/git-basics/" title="Git 基础入门：实习生带你走完第一次提交"><img class="cover" src="https://images.unsplash.com/photo-1649451844897-8699a1d6d96d?auto=format&fit=crop&w=1600&q=85" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-05</div><div class="info-item-2">Git 基础入门：实习生带你走完第一次提交</div></div><div class="info-2"><div class="info-item-1">刚开始实习时，我对 Git 的理解只有一句话：写完代码记得 add、commit、push。后来真正参与协作才发现，理解每一步在做什么，比背命令更重要。 这篇笔记会从零带你完成一次提交和推送。建议跟着创建一个练习目录，亲手操作一遍。   先认识 Git 和 GitHubGit 用来记录文件的变化，帮助我们查看历史、创建分支和合并修改。GitHub 是托管 Git 仓库的平台，团队可以在上面协作。 本地仓库保存在自己的电脑上，远程仓库通常保存在 GitHub 等平台。你可以先在本地提交，再把提交推送到远程。 安装和首次配置先在终端检查 Git 是否安装： 1git --version  如果没有安装，可以到 Git 官网下载安装。macOS 也可以用 Homebrew 安装 git。 第一次使用时设置提交者信息，把下面的内容换成自己的名字和邮箱： 12git config --global user.name &quot;你的名字&quot;git config --global user.email &quot;你的邮箱&quot;  查看配置： 1git config --gl...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/profile-transparent.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">binlicoder</div><div class="author-info-description">一个程序员的技术探索、生活记录与成长手记。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">7</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/binlicoder"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/binlicoder" target="_blank" title="GitHub"><i class="fab fa-github"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#fetch-%E5%92%8C-pull-%E6%9C%89%E4%BB%80%E4%B9%88%E5%8C%BA%E5%88%AB"><span class="toc-number">1.</span> <span class="toc-text">fetch 和 pull 有什么区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%B4%E6%97%B6%E4%BF%9D%E5%AD%98%E6%9C%AA%E5%AE%8C%E6%88%90%E7%9A%84%E4%BF%AE%E6%94%B9"><span class="toc-number">2.</span> <span class="toc-text">临时保存未完成的修改</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E5%90%88%E5%B9%B6%E5%86%B2%E7%AA%81"><span class="toc-number">3.</span> <span class="toc-text">解决合并冲突</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rebase%EF%BC%9A%E6%95%B4%E7%90%86%E8%87%AA%E5%B7%B1%E7%9A%84%E5%8A%9F%E8%83%BD%E5%88%86%E6%94%AF"><span class="toc-number">4.</span> <span class="toc-text">rebase：整理自己的功能分支</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B4%E7%90%86%E5%B0%9A%E6%9C%AA%E5%85%B1%E4%BA%AB%E7%9A%84%E6%8F%90%E4%BA%A4"><span class="toc-number">5.</span> <span class="toc-text">整理尚未共享的提交</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E6%9C%80%E8%BF%91%E4%B8%80%E6%AC%A1%E6%8F%90%E4%BA%A4"><span class="toc-number">6.</span> <span class="toc-text">修改最近一次提交</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%B2%E7%BB%8F%E6%8E%A8%E9%80%81%E7%9A%84%E9%94%99%E8%AF%AF%E6%8F%90%E4%BA%A4"><span class="toc-number">7.</span> <span class="toc-text">已经推送的错误提交</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%8A%E5%8D%95%E4%B8%AA%E4%BF%AE%E5%A4%8D%E5%B8%A6%E5%88%B0%E5%BD%93%E5%89%8D%E5%88%86%E6%94%AF"><span class="toc-number">8.</span> <span class="toc-text">把单个修复带到当前分支</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E9%80%81%E8%A2%AB%E6%8B%92%E7%BB%9D%E6%97%B6"><span class="toc-number">9.</span> <span class="toc-text">推送被拒绝时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%BE%E5%9B%9E%E7%BA%BF%E7%B4%A2"><span class="toc-number">10.</span> <span class="toc-text">找回线索</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E7%BB%99%E8%87%AA%E5%B7%B1%E7%9A%84%E5%8D%8F%E4%BD%9C%E4%B9%A0%E6%83%AF"><span class="toc-number">11.</span> <span class="toc-text">我给自己的协作习惯</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/05/macos-homebrew-guide/" title="macOS 上手 Homebrew：让软件安装和更新更简单">macOS 上手 Homebrew：让软件安装和更新更简单</a><time datetime="2026-11-05T10:30:00.000Z" title="发表于 2026-11-05 18:30:00">2026-11-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/05/git-advanced/" title="Git 进阶实战：实习中常遇到的冲突、变基与撤销">Git 进阶实战：实习中常遇到的冲突、变基与撤销</a><time datetime="2026-11-05T09:36:00.000Z" title="发表于 2026-11-05 17:36:00">2026-11-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/05/git-basics/" title="Git 基础入门：实习生带你走完第一次提交">Git 基础入门：实习生带你走完第一次提交</a><time datetime="2026-11-05T09:35:00.000Z" title="发表于 2026-11-05 17:35:00">2026-11-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/05/hello-world/" title="Hello World">Hello World</a><time datetime="2026-11-05T08:19:33.050Z" title="发表于 2026-11-05 16:19:33">2026-11-05</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/05/hello/" title="你好，世界">你好，世界</a><time datetime="2026-11-05T04:00:00.000Z" title="发表于 2026-11-05 12:00:00">2026-11-05</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By binlicoder</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"></div><script src="/js/article-layout.js?v=20261105e" defer></script><script src="/js/music-player.js?v=20261105b" defer></script><script src="/js/home-layout.js?v=20261105d" defer></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
