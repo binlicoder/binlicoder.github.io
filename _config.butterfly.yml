@@ -44,8 +44,8 @@ darkmode:
 inject:
   head:
     - <script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script>
-    - <link rel="stylesheet" href="/css/custom.css?v=20261105i">
+    - <link rel="stylesheet" href="/css/custom.css?v=20261106a">
   bottom:
     - <script src="/js/article-layout.js?v=20261105i" defer></script>
-    - <script src="/js/music-player.js?v=20261105b" defer></script>
+    - <script src="/js/music-player.js?v=20261106a" defer></script>
     - <script src="/js/home-layout.js?v=20261105d" defer></script>
