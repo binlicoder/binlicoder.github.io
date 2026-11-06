@@ -49,4 +49,3 @@
 /* Homebrew 文章横幅使用封面，完整显示主体并柔化两侧。 */
 #body-wrap.post #page-header.homebrew-cover:before{display:block;content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(12,12,15,.58),rgba(12,12,15,.68)),url('/img/homebrew-cover.png') center / cover no-repeat!important;filter:blur(20px);z-index:0}
 #body-wrap.post #page-header.homebrew-cover:after{inset:0;background-image:linear-gradient(rgba(12,12,15,.24),rgba(12,12,15,.48)),url('/img/homebrew-cover.png');background-position:center;background-size:100% 100%,auto 100%;background-repeat:no-repeat;opacity:1}
-.music-card audio[hidden],.music-card .music-video[hidden],.music-card .music-video-link[hidden]{display:none}.music-card .music-video{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#100d13}.music-card .music-video-link{display:block;margin-top:8px;font-size:.8rem;color:var(--theme-color)}
