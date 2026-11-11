@@ -4,9 +4,8 @@ name: 发布博客
 on:
   push:
     branches: [source]
-  # 每天定时构建一次，让 date 写在未来的文章到点自动上线
-  schedule:
-    - cron: '0 1 * * *' # UTC 01:00 = 北京时间 09:00
+  # 定时发布：GitHub 的 schedule 只在默认分支（main）上的工作流生效，
+  # 本工作流位于 source 分支，因此不用 schedule，改为在 Actions 页面手动点 Run workflow。
   workflow_dispatch:
 
 permissions:
