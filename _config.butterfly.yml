@@ -4,6 +4,7 @@ menu:
   关于: /about/ || fas fa-circle-info
 social:
   fab fa-github: https://github.com/binlicoder || GitHub
+favicon: /img/favicon.ico
 avatar:
   img: /img/profile-transparent.png
   effect: false
@@ -43,6 +44,7 @@ darkmode:
   autoChangeMode: false
 inject:
   head:
+    - <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
     - <script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script>
     - <link rel="stylesheet" href="/css/custom.css?v=20261105i">
   bottom:
