@@ -5,6 +5,10 @@ menu:
 social:
   fab fa-github: https://github.com/binlicoder || GitHub
 favicon: /img/icons/favicon.ico
+error_404:
+  enable: true
+  subtitle: '链接可能失效了，也可能这篇我还没写完。要不先回首页，或者去归档里翻翻。'
+  background: /img/error-page.png
 avatar:
   img: /img/profile-transparent.png
   effect: false
@@ -46,8 +50,9 @@ inject:
   head:
     - <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
     - <script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script>
-    - <link rel="stylesheet" href="/css/custom.css?v=20261105i">
+    - <link rel="stylesheet" href="/css/custom.css?v=20261111a">
   bottom:
     - <script src="/js/article-layout.js?v=20261105i" defer></script>
     - <script src="/js/music-player.js?v=20261105b" defer></script>
     - <script src="/js/home-layout.js?v=20261105d" defer></script>
+    - <script src="/js/error-layout.js?v=20261111a" defer></script>
