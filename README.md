@@ -12,13 +12,13 @@
 
 - **Git**：https://git-scm.com/downloads
 - **Node.js 22**（22.17.1 或更新的 22.x）：https://nodejs.org/
-- **pnpm 11**：装完 Node 后执行 `corepack enable` 即可，无需单独安装
+- **pnpm**（10 或更新版本）：装完 Node 后执行 `corepack enable` 即可，无需单独安装
 
 检查是否就绪：
 
 ```bash
 node --version    # 应显示 v22.x
-pnpm --version    # 应显示 11.x
+pnpm --version    # 应显示 10.x 或更高
 git --version
 ```
 
@@ -91,7 +91,9 @@ git status              # 确认有没有未提交的改动
 ./publish.sh "收尾"      # 有改动就先推
 ```
 
-推完就可以换机器了，新电脑上按上面「三步恢复」走一遍即可。新电脑第一次 `git pull` 时如果有冲突提示，说明旧机器还有没推的内容，回去补推。
+推完就可以换机器了，新电脑上按上面「三步恢复」走一遍即可。
+
+新电脑第一次执行 `./new.sh` 如果提示 `Permission denied`，说明克隆时没保留可执行位（少见，多见于从压缩包解压的副本），执行一次 `chmod +x *.sh` 即可。
 
 ## 其他说明
 
