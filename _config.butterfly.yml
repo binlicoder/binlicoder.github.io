@@ -50,7 +50,7 @@ inject:
   head:
     - <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
     - <script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script>
-    - <link rel="stylesheet" href="/css/custom.css?v=20261112a">
+    - <link rel="stylesheet" href="/css/custom.css?v=20261112b">
   bottom:
     - <script src="/js/article-layout.js?v=20261105i" defer></script>
     - <script src="/js/music-player.js?v=20261105b" defer></script>
