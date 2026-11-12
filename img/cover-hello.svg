@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="你好，世界">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#33253f"/>
+      <stop offset="1" stop-color="#12101a"/>
+    </linearGradient>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2.5" cy="2.5" r="2" fill="#d7b9e4" opacity="0.16"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <rect width="800" height="500" fill="url(#dots)"/>
+  <circle cx="400" cy="250" r="150" fill="none" stroke="#d7b9e4" stroke-width="1.5" opacity="0.22"/>
+  <circle cx="400" cy="250" r="108" fill="none" stroke="#d7b9e4" stroke-width="2" opacity="0.45"/>
+  <circle cx="400" cy="250" r="62" fill="#d7b9e4" opacity="0.08"/>
+  <circle cx="400" cy="250" r="7" fill="#e9d5f2"/>
+  <circle cx="508" cy="250" r="4.5" fill="#d7b9e4" opacity="0.85"/>
+  <circle cx="400" cy="142" r="4.5" fill="#d7b9e4" opacity="0.55"/>
+  <circle cx="292" cy="250" r="4.5" fill="#d7b9e4" opacity="0.4"/>
+  <circle cx="400" cy="358" r="4.5" fill="#d7b9e4" opacity="0.28"/>
+  <text x="400" y="452" fill="#e9d9f2" opacity="0.45" font-family="system-ui,sans-serif" font-size="18" letter-spacing="10" text-anchor="middle">HELLO, WORLD</text>
+</svg>
