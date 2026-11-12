@@ -23,6 +23,15 @@ document.addEventListener('DOMContentLoaded', () => {
   sidebar.setAttribute('aria-label', '博客信息');
   sidebar.innerHTML = '<section class="home-widget home-stats"><h2>统计</h2><dl><div><dt>文章</dt><dd data-stat="posts">—</dd></div><div><dt>分类</dt><dd data-stat="categories">—</dd></div><div><dt>标签</dt><dd data-stat="tags">—</dd></div><div><dt>最近更新</dt><dd data-stat="updated">—</dd></div></dl></section><section class="home-widget home-calendar"><h2>日历</h2><div class="calendar-nav"><button type="button" aria-label="上个月">‹</button><strong></strong><button type="button" aria-label="下个月">›</button></div><div class="calendar-grid"></div></section>';
   layout.append(sidebar);
+
+  // 左栏卡片过多、右栏过空，把这两张移到右栏，让三栏高度接近
+  // 注意：网站信息卡由页面脚本填充统计数字，必须留在左栏
+  const asideContent = document.querySelector('#aside-content');
+  ['card-recent-post', 'card-archives'].forEach(className => {
+    const card = asideContent && asideContent.querySelector('.' + className);
+    if (card) sidebar.append(card);
+  });
+
   fetch('/home-statistics.json').then(response => response.ok ? response.json() : null).then(stats => {
     if (!stats) return;
     sidebar.querySelectorAll('[data-stat]').forEach(element => {

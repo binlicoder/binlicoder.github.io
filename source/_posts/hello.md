@@ -1,6 +1,7 @@
 ---
 title: 你好，世界
 date: 2026-11-05 12:00:00
+cover: /img/cover-hello.svg
 ---
 
 欢迎来到「落笔之间」。
