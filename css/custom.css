@@ -131,3 +131,22 @@
   #content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item{margin:0!important}
   #content-inner.home-three-column .home-right{margin-top:16px}
 }
+
+/* 首页卡片比例与侧栏密度 */
+#content-inner.home-three-column{max-width:1320px;column-gap:20px;align-items:start}
+#content-inner.home-three-column #recent-posts>.recent-post-items{gap:18px}
+#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .post_cover{height:160px}
+#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .recent-post-info{min-height:145px;padding:16px 20px 20px;gap:8px}
+#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .article-title{font-size:1.02rem;line-height:1.5}
+#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .article-meta-wrap{opacity:.8}
+#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .content{opacity:.82}
+#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item:first-child .post_cover{height:100%}
+#content-inner.home-three-column #aside-content .card-widget{margin-top:16px;padding:18px 20px}
+#content-inner.home-three-column #aside-content .card-widget:first-child{margin-top:0}
+#content-inner.home-three-column #aside-content .card-webinfo{display:none}
+#content-inner.home-three-column #aside-content .card-tags .card-tag-cloud{gap:6px}
+#content-inner.home-three-column #aside-content .card-tags .card-tag-cloud a{font-size:.78rem!important;padding:3px 9px}
+#content-inner.home-three-column .home-right .card-recent-post .aside-list-item{margin-bottom:10px}
+#content-inner.home-three-column #pagination{margin:24px 0 18px}
+#content-inner.home-three-column #pagination .page-number.current{background:#b99acb;color:#241e28}
+@media(max-width:768px){#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .post_cover{height:190px}#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .recent-post-info{min-height:0;padding:18px 20px 22px}}
