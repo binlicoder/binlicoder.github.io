@@ -163,7 +163,7 @@
   #content-inner.home-three-column .home-right{position:static;display:flex;flex-direction:column;justify-content:space-between;align-self:stretch}
 }
 
-/* 关于页两栏共用行高，正文卡片与侧栏的首尾对齐。 */
+/* 关于页两栏对齐，个人资料和播放器保持自然高度。 */
 #body-wrap.type-about #content-inner {
   max-width: 1200px;
   width: 100%;
@@ -171,7 +171,7 @@
 
 #body-wrap.type-about #page {
   min-width: 0;
-  padding: clamp(28px, 4vw, 48px);
+  padding: clamp(28px, 3vw, 40px);
 }
 
 #body-wrap.type-about #page .page-title,
@@ -183,11 +183,62 @@
 
 #body-wrap.type-about #article-container {
   font-size: 1rem;
-  line-height: 1.9;
+  line-height: 1.85;
 }
 
-#body-wrap.type-about #aside-content .sticky_layout {
+#body-wrap.type-about #article-container h2 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+#body-wrap.type-about #article-container p {
+  margin: 14px 0;
+}
+
+#body-wrap.type-about #article-container > :last-child {
+  margin-bottom: 0;
+}
+
+#body-wrap.type-about #aside-content .card-info {
+  flex: none;
+  padding: 24px 20px;
+}
+
+#body-wrap.type-about #aside-content .card-info .avatar-img {
+  height: 160px;
+}
+
+#body-wrap.type-about #aside-content .music-card {
+  flex: none;
+  padding: 20px;
+}
+
+#body-wrap.type-about .music-card .music-heading {
+  margin-bottom: 14px;
+}
+
+#body-wrap.type-about .music-card .music-cover {
+  width: 52px;
+  height: 52px;
+}
+
+#body-wrap.type-about #aside-content .sticky_layout > :not(.card-tags) {
   display: none;
+}
+
+#body-wrap.type-about #aside-content .card-tags {
+  padding: 20px;
+}
+
+#body-wrap.type-about #aside-content .card-tags .item-headline {
+  font-size: .95rem;
+  margin-bottom: 12px;
+}
+
+#body-wrap.type-about #aside-content .card-tag-cloud a {
+  font-size: .75rem !important;
+  line-height: 1.65;
+  padding: 3px 9px;
 }
 
 @media (min-width: 901px) {
@@ -210,21 +261,25 @@
     grid-row: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 20px;
+    gap: 16px;
     width: auto;
     padding: 0;
   }
 
   #body-wrap.type-about #aside-content .card-widget {
+    margin-top: 0;
     margin-bottom: 0;
   }
 
-  #body-wrap.type-about #aside-content .card-info {
-    flex: 1;
+  #body-wrap.type-about #aside-content .sticky_layout {
+    position: static;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    flex: 1;
+  }
+
+  #body-wrap.type-about #aside-content .card-tags {
+    flex: 1;
   }
 
   html.hide-aside #body-wrap.type-about #content-inner {
@@ -253,5 +308,9 @@
 
   #body-wrap.type-about #aside-content {
     order: 1;
+  }
+
+  #body-wrap.type-about #aside-content .sticky_layout {
+    display: none;
   }
 }
