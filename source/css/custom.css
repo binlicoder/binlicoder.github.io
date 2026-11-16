@@ -162,3 +162,91 @@
 @media (min-width:1151px){
   #content-inner.home-three-column .home-right{position:static;display:flex;flex-direction:column;justify-content:space-between;align-self:stretch}
 }
+
+/* 关于页两栏共用行高，正文卡片与侧栏的首尾对齐。 */
+#body-wrap.type-about #content-inner {
+  max-width: 1200px;
+  width: 100%;
+}
+
+#body-wrap.type-about #page {
+  min-width: 0;
+  padding: clamp(28px, 4vw, 48px);
+}
+
+#body-wrap.type-about #page .page-title,
+#body-wrap.type-about #article-container {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#body-wrap.type-about #article-container {
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+#body-wrap.type-about #aside-content .sticky_layout {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  #body-wrap.type-about #content-inner {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  #body-wrap.type-about #page {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    align-self: stretch;
+  }
+
+  #body-wrap.type-about #aside-content {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+    width: auto;
+    padding: 0;
+  }
+
+  #body-wrap.type-about #aside-content .card-widget {
+    margin-bottom: 0;
+  }
+
+  #body-wrap.type-about #aside-content .card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  html.hide-aside #body-wrap.type-about #content-inner {
+    display: block;
+    max-width: 960px;
+  }
+
+  html.hide-aside #body-wrap.type-about #page {
+    width: 100%;
+  }
+
+  html.hide-aside #body-wrap.type-about #aside-content {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  #body-wrap.type-about #content-inner {
+    flex-direction: column;
+  }
+
+  #body-wrap.type-about #page {
+    padding: 28px 22px;
+  }
+}
