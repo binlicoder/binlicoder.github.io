@@ -99,4 +99,4 @@ git status              # 确认有没有未提交的改动
 
 - 生成目录 `public/`、依赖目录 `node_modules/`、部署缓存 `.deploy_git/` 都是工具产物，不纳入提交。
 - `core.autocrlf` 在 Windows 上默认开启，`.gitattributes` 已把 `*.sh`、`*.yml` 固定为 LF，脚本换机器也不会因为换行符报错。
-- 音乐播放器用的是参考站点的远程音频地址，播放是否正常取决于对方服务器。
+- 音乐播放器的两首音频和封面保存在 `source/music/`，随博客一起发布，不再依赖参考站点的外链。打开页面会预读时长，点击播放开始音乐；加载失败可点击「重试播放」。更换曲目时，编辑 `source/js/music-player.js` 的 `tracks` 列表，并将对应 MP3 和封面一起放入 `source/music/`。
