@@ -247,6 +247,11 @@
   }
 
   #body-wrap.type-about #page {
+    order: 0;
     padding: 28px 22px;
+  }
+
+  #body-wrap.type-about #aside-content {
+    order: 1;
   }
 }
