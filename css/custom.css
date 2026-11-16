@@ -150,3 +150,15 @@
 #content-inner.home-three-column #pagination{margin:24px 0 18px}
 #content-inner.home-three-column #pagination .page-number.current{background:#b99acb;color:#241e28}
 @media(max-width:768px){#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .post_cover{height:190px}#content-inner.home-three-column #recent-posts>.recent-post-items>.recent-post-item .recent-post-info{min-height:0;padding:18px 20px 22px}}
+
+/* 桌面首页各栏共享行高，较短的栏目将卡片均匀排开。 */
+@media (min-width:769px){
+  #content-inner.home-three-column{align-items:stretch}
+  #content-inner.home-three-column #recent-posts{display:flex;flex-direction:column;min-width:0}
+  #content-inner.home-three-column #pagination{margin-top:auto;padding-top:24px;margin-bottom:0}
+  #content-inner.home-three-column #aside-content{display:flex;flex-direction:column;align-self:stretch}
+  #content-inner.home-three-column #aside-content>.sticky_layout{position:static;display:flex;flex:1;flex-direction:column;justify-content:space-between}
+}
+@media (min-width:1151px){
+  #content-inner.home-three-column .home-right{position:static;display:flex;flex-direction:column;justify-content:space-between;align-self:stretch}
+}
