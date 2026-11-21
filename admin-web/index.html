@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>落笔之间 · 写作后台</title>
+  <header>
+    <strong>落笔之间</strong><span>写作后台</span
+    ><button id="login">GitHub 登录</button>
+  </header>
+  <main>
+    <aside>
+      <h2>文章</h2>
+      <input id="search" placeholder="搜索标题、分类或标签" />
+      <div id="posts"></div>
+      <button id="fresh">新建文章</button>
+      <h2>本机草稿</h2>
+      <div id="drafts"></div>
+      <h2>发布记录</h2>
+      <div id="jobs"></div>
+    </aside>
+    <section>
+      <h1>文章编辑</h1>
+      <div class="tools">
+        <label
+          >导入 Markdown<input
+            type="file"
+            id="importer"
+            accept=".md,.markdown" /></label
+        ><label
+          >添加配图<input
+            type="file"
+            id="images"
+            multiple
+            accept="image/png,image/jpeg,image/webp" /></label
+        ><label
+          >导入配图目录<input type="file" id="folder" webkitdirectory multiple
+        /></label>
+      </div>
+      <div class="fields">
+        <label>标题<input id="title" /></label
+        ><label>文章短名<input id="slug" /></label
+        ><label>分类<input id="categories" /></label
+        ><label>标签<input id="tags" /></label
+        ><label>封面路径<input id="cover" /></label
+        ><label>摘要<input id="description" /></label>
+      </div>
+      <div class="split">
+        <label>Markdown<textarea id="body"></textarea></label>
+        <div>
+          <b>预览</b>
+          <article id="preview"></article>
+        </div>
+      </div>
+      <footer>
+        <button id="exporter">导出 Markdown</button
+        ><button id="publish">发布文章</button>
+      </footer>
+      <p role="status" id="notice"></p>
+      <div id="result"></div>
+    </section>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</html>

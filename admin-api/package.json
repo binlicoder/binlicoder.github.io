@@ -1,0 +1,13 @@
+{
+  "name": "blog-admin-api",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "yaml": "^2.8.0",
+    "mdast-util-from-markdown": "^2.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0",
+    "typescript": "^5.8.0"
+  }
+}

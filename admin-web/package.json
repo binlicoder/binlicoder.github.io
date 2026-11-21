@@ -1,0 +1,20 @@
+{
+  "name": "blog-admin-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "yaml": "^2.8.0",
+    "dompurify": "^3.2.0",
+    "marked": "^15.0.0",
+    "mdast-util-from-markdown": "^2.0.0",
+    "idb-keyval": "^6.2.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.0",
+    "typescript": "^5.8.0"
+  }
+}

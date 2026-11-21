@@ -38,6 +38,14 @@ jobs:
       - name: 生成博客
         run: pnpm exec hexo generate
 
+      - name: 构建博客后台
+        env:
+          VITE_ADMIN_API_ORIGIN: ${{ vars.ADMIN_API_ORIGIN }}
+        run: |
+          pnpm --dir admin-web build
+          mkdir -p public/admin
+          cp -R admin-web/dist/. public/admin/
+
       - name: 同步网页到 main 分支
         run: |
           git fetch origin main

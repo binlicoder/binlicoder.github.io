@@ -1,0 +1,20 @@
+{
+  "name": "blog-admin-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-11-22",
+  "vars": {
+    "BLOG_ORIGIN": "https://binlicoder.github.io",
+    "GITHUB_REPOSITORY": "binlicoder/binlicoder.github.io",
+    "GITHUB_BRANCH": "source",
+    "GITHUB_ADMIN_ID": "194271605",
+    "GITHUB_CLIENT_ID": "Iv23li7VZh8JuNH4WJwV",
+    "GITHUB_CALLBACK_URL": "https://blog-admin-api.blog-admin-api.workers.dev/auth/github/callback",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blog-admin-prod",
+      "database_id": "a951349b-b84e-4590-97e0-1b03c548454f",
+    },
+  ],
+}

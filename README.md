@@ -100,3 +100,15 @@ git status              # 确认有没有未提交的改动
 - 生成目录 `public/`、依赖目录 `node_modules/`、部署缓存 `.deploy_git/` 都是工具产物，不纳入提交。
 - `core.autocrlf` 在 Windows 上默认开启，`.gitattributes` 已把 `*.sh`、`*.yml` 固定为 LF，脚本换机器也不会因为换行符报错。
 - 音乐播放器的两首音频和封面保存在 `source/music/`，随博客一起发布，不再依赖参考站点的外链。打开页面会预读时长，点击播放开始音乐；加载失败可点击「重试播放」。更换曲目时，编辑 `source/js/music-player.js` 的 `tracks` 列表，并将对应 MP3 和封面一起放入 `source/music/`。
+
+## 写作后台
+
+后台前端位于 `admin-web`，生产入口为 `/admin/`。Worker 位于 `admin-api`。本机可用 `pnpm --dir admin-web dev` 启动编辑器，在浏览器打开终端显示地址的 `/admin/`。导入、预览、本机草稿和导出可先离线使用。编辑器使用逗号分隔分类和标签。未修改的分类层级按原 YAML 保留。
+
+接入测试环境或生产环境时，分别准备该环境的以下配置。
+
+1. 在 Cloudflare 创建 D1，把真实数据库 ID 填入 `admin-api/wrangler.jsonc`。在该目录运行 `pnpm exec wrangler d1 migrations apply blog-admin-prod --remote`。
+2. 注册 GitHub App，设置 Worker 的 `/auth/github/callback` 为回调地址，仅安装到博客仓库，授予 Contents 读写权限。将 Client ID、管理员数字 ID 和完整回调地址填入 Wrangler 配置。测试环境同时替换仓库、分支和前端来源。
+3. 在 `admin-api` 下使用 `pnpm exec wrangler secret put GITHUB_CLIENT_SECRET` 和 `pnpm exec wrangler secret put SESSION_ENCRYPTION_KEY` 分别保存 App 密钥和 Base64 编码的独立 32 字节随机密钥。随后运行 `pnpm exec wrangler deploy`，访问 Worker 的 `/healthz`。
+4. 在 GitHub 仓库的 Actions Variables 设置 `ADMIN_API_ORIGIN` 为 Worker 的 HTTPS 来源地址，不带末尾斜杠。开发服务器则使用环境变量 `VITE_ADMIN_API_ORIGIN`，并使测试 Worker 的 `BLOG_ORIGIN` 对应开发服务器来源。
+5. 发布前端和 Hexo 插件后，从同一标签页登录。用测试稿验证一次新建及更新，并核对发布任务给出的链接。原工作流继续将静态产物推到 main，若 Pages 未刷新，后台会保持等待公网确认。

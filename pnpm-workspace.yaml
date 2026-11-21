@@ -1,2 +1,7 @@
 allowBuilds:
   hexo-util: true
+  esbuild: true
+  workerd: true
+packages:
+  - admin-web
+  - admin-api
