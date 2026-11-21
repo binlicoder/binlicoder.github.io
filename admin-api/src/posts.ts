@@ -116,6 +116,32 @@ export async function api(r, e, sql, token) {
       return { ...j, stage: "等待公网确认" };
     }
   }
+  if (p === "/api/terms") {
+    if (r.method === "GET")
+      return (
+        await e.DB.prepare(
+          "SELECT kind, name FROM editorial_terms ORDER BY kind, name",
+        ).all()
+      ).results;
+    if (r.method === "POST") {
+      const body = await r.json().catch(() => null);
+      const name =
+        typeof body?.name === "string" ? body.name.trim().normalize("NFC") : "";
+      if (
+        !["categories", "tags"].includes(body?.kind) ||
+        !name ||
+        name.length > 80 ||
+        /[,，\p{Cc}]/u.test(name)
+      )
+        fail(422, "名称须为 1–80 个字符，不能包含逗号或控制字符");
+      await sql(
+        "INSERT OR IGNORE INTO editorial_terms(kind,name) VALUES(?,?)",
+        body.kind,
+        name,
+      ).run();
+      return { kind: body.kind, name };
+    }
+  }
   if (r.method === "GET") {
     if (p === "/api/publishes")
       return (
@@ -137,6 +163,7 @@ export async function api(r, e, sql, token) {
             return {
               id: f.name.slice(0, -3),
               title: m.title,
+              cover: m.cover,
               date: m.date,
               categories: m.categories,
               tags: m.tags,

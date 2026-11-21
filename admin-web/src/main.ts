@@ -64,6 +64,7 @@ function button(parent, label, fn) {
   b.textContent = label;
   b.onclick = () => Promise.resolve(fn()).catch((err) => notice(err.message));
   el(parent).append(b);
+  return b;
 }
 function listValue(v) {
   return Array.isArray(v) ? v.flat(Infinity).join("，") : v || "";
@@ -112,7 +113,14 @@ function load(markdown, slug, sha) {
 }
 async function save() {
   sessionStorage.setItem("current", key);
-  await set(key, { values: values(), meta, baseSha, files, coverFile, pending });
+  await set(key, {
+    values: values(),
+    meta,
+    baseSha,
+    files,
+    coverFile,
+    pending,
+  });
 }
 async function restore(k) {
   const d = await get(k);
@@ -127,10 +135,15 @@ async function restore(k) {
 }
 async function drafts() {
   el("drafts").replaceChildren();
-  for (const k of await keys())
+  const draftKeys = await keys();
+  if (!draftKeys.length) el("drafts").textContent = "本机暂无草稿。";
+  for (const k of draftKeys)
     if (typeof k === "string" && /^(draft|post):/.test(k)) {
       const d = await get(k);
-      button("drafts", d.values.title || "未命名草稿", () => restore(k));
+      button("drafts", d.values.title || "未命名草稿", async () => {
+        await restore(k);
+        navigate("editor");
+      });
     }
 }
 const norm = (p) => {
@@ -194,10 +207,17 @@ function renderCover() {
   const path = el("cover").value;
   let local = coverFile;
   if (!local && path) {
-    try { local = match(path); } catch { /* An imported cover can be selected later. */ }
+    try {
+      local = match(path);
+    } catch {
+      /* An imported cover can be selected later. */
+    }
   }
-  const src = local ? "data:" + local.type + ";base64," + local.contents
-    : /^(https?:\/\/|\/img\/)/i.test(path) ? path : "";
+  const src = local
+    ? "data:" + local.type + ";base64," + local.contents
+    : /^(https?:\/\/|\/img\/)/i.test(path)
+      ? path
+      : "";
   const img = el("coverPreview");
   if (src && img.getAttribute("src") !== src) img.src = src;
   if (!src) img.removeAttribute("src");
@@ -228,11 +248,15 @@ async function addFiles(input) {
     if (file.size > 3145728) throw Error("单图上限 3 MiB");
     const path = file.webkitRelativePath || file.name;
     const buf = await file.arrayBuffer();
-    const name = (await digest(buf)) + "." +
-      { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" }[file.type];
+    const name =
+      (await digest(buf)) +
+      "." +
+      { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" }[
+        file.type
+      ];
     if (key !== draftKey) return;
     const rest = isCover ? files : files.filter((f) => f.path !== path);
-    const sizes = new Map(rest.map(f => [f.name, f.size]));
+    const sizes = new Map(rest.map((f) => [f.name, f.size]));
     if (!isCover && coverFile) sizes.set(coverFile.name, coverFile.size);
     sizes.set(name, file.size);
     if ([...sizes.values()].reduce((sum, size) => sum + size, 0) > 8388608)
@@ -241,7 +265,13 @@ async function addFiles(input) {
     let binary = "";
     for (let i = 0; i < bytes.length; i += 8192)
       binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
-    const image = { path, type: file.type, size: file.size, name, contents: btoa(binary) };
+    const image = {
+      path,
+      type: file.type,
+      size: file.size,
+      name,
+      contents: btoa(binary),
+    };
     if (isCover) {
       coverFile = image;
       el("cover").value = file.name;
@@ -253,25 +283,179 @@ async function addFiles(input) {
   await save();
   await render();
 }
-async function posts() {
-  const q = encodeURIComponent(el("search").value);
-  el("posts").replaceChildren();
-  async function page(n) {
-    const data = await request("/api/posts?q=" + q + "&page=" + n);
-    for (const p of data.posts)
-      button(
-        "posts",
-        [p.title, p.date, listValue(p.categories), listValue(p.tags)]
-          .filter(Boolean)
-          .join(" · "),
-        async () => {
-          const post = await request("/api/posts/" + p.id);
-          load(post.markdown, p.id, post.sha);
-        },
-      );
-    if (n * 50 < data.total) await page(n + 1);
+let articles = [];
+let savedTerms = [];
+let currentView = "library";
+let filterTerm = null;
+const termLabels = { categories: "分类", tags: "标签" };
+function termValues(value) {
+  return [value]
+    .flat(Infinity)
+    .filter((v) => typeof v === "string" && v.trim());
+}
+function catalog(kind) {
+  const counts = new Map<string, number>();
+  for (const term of savedTerms)
+    if (term.kind === kind) counts.set(term.name, 0);
+  for (const post of articles) {
+    for (const name of new Set(termValues(post[kind])))
+      counts.set(name, (counts.get(name) || 0) + 1);
   }
-  await page(1);
+  return [...counts.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh-CN"),
+  );
+}
+function updateCatalog() {
+  for (const [kind, label] of Object.entries(termLabels)) {
+    const terms = catalog(kind);
+    el(kind + "-count").textContent = token ? terms.length : "—";
+    el("choose-" + kind).replaceChildren(
+      new Option("选用已有" + label, ""),
+      ...terms.map(([name]) => new Option(name, name)),
+    );
+  }
+  if (currentView in termLabels) renderTerms(currentView);
+}
+function renderTerms(kind) {
+  const label = termLabels[kind];
+  el("termTitle").textContent = label + "管理";
+  el("termLabel").textContent = "新" + label + "名称";
+  el("termList").replaceChildren();
+  if (!token) {
+    el("termList").textContent = "登录 GitHub 后管理" + label + "。";
+    return;
+  }
+  const terms = catalog(kind);
+  if (!terms.length) el("termList").textContent = "还没有" + label + "。";
+  for (const [name, count] of terms) {
+    const row = button("termList", name, () => {
+      filterTerm = { kind, name };
+      el("search").value = "";
+      navigate("library");
+    });
+    row.className = "term-row";
+    const usage = document.createElement("small");
+    usage.textContent = count + " 篇文章";
+    row.append(usage);
+  }
+}
+function navigate(view) {
+  currentView = view;
+  const panel = view in termLabels ? "taxonomy" : view;
+  for (const section of document.querySelectorAll(".view"))
+    section.hidden = section.id !== panel;
+  for (const btn of document.querySelectorAll("nav button")) {
+    if (btn.dataset.view === view) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
+  }
+  if (panel === "taxonomy") {
+    el("termName").value = "";
+    renderTerms(view);
+  }
+  if (view === "library") renderPosts();
+  if (view === "draftView") drafts().catch((err) => notice(err.message));
+  if (view === "jobView" && token)
+    historyList().catch((err) => notice(err.message));
+  window.scrollTo(0, 0);
+}
+for (const control of document.querySelectorAll("[data-view],[data-go]")) {
+  control.addEventListener("click", () => {
+    filterTerm = null;
+    notice("");
+    navigate(control.dataset.view || control.dataset.go);
+  });
+}
+el("termForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const kind = currentView,
+    name = el("termName").value.trim().normalize("NFC");
+  try {
+    if (!token) throw Error("请先登录 GitHub");
+    if (catalog(kind).some(([existing]) => existing === name))
+      throw Error("这个" + termLabels[kind] + "已存在");
+    const term = await request("/api/terms", { kind, name });
+    savedTerms.push(term);
+    if (currentView === kind) el("termName").value = "";
+    updateCatalog();
+    notice("已创建" + termLabels[kind] + "「" + term.name + "」");
+  } catch (err) {
+    notice(err.message);
+  }
+});
+for (const kind of Object.keys(termLabels))
+  bind("choose-" + kind, "change", () => {
+    const select = el("choose-" + kind),
+      name = select.value;
+    if (!name) return;
+    const values = el(kind)
+      .value.split(/[,，]/)
+      .map((v) => v.trim())
+      .filter(Boolean);
+    if (!values.includes(name)) {
+      el(kind).value = [...values, name].join("，");
+      el(kind).dispatchEvent(new Event("input"));
+    }
+    select.value = "";
+  });
+function renderPosts() {
+  el("posts").replaceChildren();
+  el("post-count").textContent = token ? articles.length : "—";
+  if (!token) {
+    el("posts").textContent = "登录 GitHub 后查看文章。";
+    return;
+  }
+  const query = el("search").value.trim().toLowerCase();
+  const filtered = articles.filter(
+    (p) =>
+      (!filterTerm ||
+        termValues(p[filterTerm.kind]).includes(filterTerm.name)) &&
+      [p.title, p.id, listValue(p.categories), listValue(p.tags)]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+  );
+  if (filterTerm)
+    button("posts", "清除筛选 · " + filterTerm.name, () => {
+      filterTerm = null;
+      renderPosts();
+    });
+  if (!filtered.length)
+    el("posts").append(document.createTextNode("没有匹配的文章"));
+  for (const p of filtered) {
+    const card = button("posts", "", async () => {
+      const post = await request("/api/posts/" + p.id);
+      load(post.markdown, p.id, post.sha);
+      navigate("editor");
+    });
+    const img = document.createElement("img"),
+      title = document.createElement("strong"),
+      info = document.createElement("small");
+    img.alt = "";
+    img.loading = "lazy";
+    img.src =
+      typeof p.cover === "string" && /^(https?:\/\/|\/img\/)/i.test(p.cover)
+        ? p.cover
+        : "/img/cover.svg";
+    title.textContent = p.title || p.id;
+    info.textContent = [
+      String(p.date || "").slice(0, 10),
+      listValue(p.categories),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    card.append(img, title, info);
+  }
+}
+async function posts() {
+  const all = [];
+  for (let page = 1; ; page++) {
+    const data = await request("/api/posts?page=" + page);
+    all.push(...data.posts);
+    if (all.length >= data.total || !data.posts.length) break;
+  }
+  articles = all.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  renderPosts();
+  updateCatalog();
 }
 async function showJob(id) {
   clearTimeout(taskTimer);
@@ -308,6 +492,7 @@ async function showJob(id) {
       el("slug").disabled = true;
       pending = null;
       await save();
+      await posts();
     }
   }
   if (
@@ -321,7 +506,9 @@ async function showJob(id) {
 }
 async function historyList() {
   el("jobs").replaceChildren();
-  for (const j of await request("/api/publishes"))
+  const jobs = await request("/api/publishes");
+  if (!jobs.length) el("jobs").textContent = "暂无发布记录。";
+  for (const j of jobs)
     button(
       "jobs",
       j.slug + " · " + new Date(j.created).toLocaleDateString(),
@@ -360,7 +547,8 @@ for (const id of fields)
     await save();
     await render();
   });
-for (const id of ["folder", "images", "coverPicker"]) bind(id, "change", () => addFiles(id));
+for (const id of ["folder", "images", "coverPicker"])
+  bind(id, "change", () => addFiles(id));
 bind("removeCover", "click", async () => {
   coverFile = null;
   el("cover").value = "";
@@ -372,6 +560,7 @@ bind("removeCover", "click", async () => {
 bind("fresh", "click", async () => {
   await drafts();
   load("", "", null);
+  navigate("editor");
 });
 bind("importer", "change", async () => {
   const f = el("importer").files[0];
@@ -396,7 +585,7 @@ bind("publish", "click", async () => {
     el("publish").disabled = false;
   }
 });
-bind("search", "change", posts);
+bind("search", "input", renderPosts);
 bind("login", "click", async () => {
   if (token) {
     await request("/auth/logout", {});
@@ -414,6 +603,9 @@ async function init() {
   const current = sessionStorage.getItem("current");
   if (current && (await get(current))) await restore(current);
   else load("", "", null);
+  navigate(current && (await get(current)) ? "editor" : "library");
+  updateCatalog();
+  el("jobs").textContent = "登录 GitHub 后查看发布记录。";
   await drafts();
   const ticket = new URLSearchParams(location.hash.slice(1)).get("ticket");
   if (ticket) {
@@ -422,6 +614,7 @@ async function init() {
     sessionStorage.removeItem("proof");
     token = (await request("/auth/exchange", { ticket, proof })).token;
     el("login").textContent = "退出登录";
+    savedTerms = await request("/api/terms");
     await posts();
     await historyList();
   }
