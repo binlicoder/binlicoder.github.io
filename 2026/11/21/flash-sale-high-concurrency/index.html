@@ -1,26 +1,26 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>我只点了一下抢购，后台凭什么说这台手机归我？ | 落笔之间</title><meta name="author" content="binlicoder"><meta name="copyright" content="binlicoder"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="从一次手机抢购出发，跟着请求走过缓存、限流、库存预扣和订单队列，看看后台什么时候才敢让用户付款。">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>秒杀系统设计：从点击抢购到库存确认 | 落笔之间</title><meta name="author" content="binlicoder"><meta name="copyright" content="binlicoder"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="我在手机上点了一下抢购。跟着这次请求走过限流、库存预占、异步建单和支付确认，看看订单何时才算数。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="我只点了一下抢购，后台凭什么说这台手机归我？">
+<meta property="og:title" content="秒杀系统设计：从点击抢购到库存确认">
 <meta property="og:url" content="https://binlicoder.github.io/2026/11/21/flash-sale-high-concurrency/index.html">
 <meta property="og:site_name" content="落笔之间">
-<meta property="og:description" content="从一次手机抢购出发，跟着请求走过缓存、限流、库存预扣和订单队列，看看后台什么时候才敢让用户付款。">
+<meta property="og:description" content="我在手机上点了一下抢购。跟着这次请求走过限流、库存预占、异步建单和支付确认，看看订单何时才算数。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://binlicoder.github.io/img/flash-sale-high-concurrency/0168.png">
+<meta property="og:image" content="https://binlicoder.github.io/img/flash-sale-high-concurrency/cover.png">
 <meta property="article:published_time" content="2026-11-21T16:11:56.000Z">
-<meta property="article:modified_time" content="2026-11-21T16:13:21.013Z">
+<meta property="article:modified_time" content="2026-11-21T16:23:25.281Z">
 <meta property="article:author" content="binlicoder">
-<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="库存">
 <meta property="article:tag" content="系统设计">
 <meta property="article:tag" content="高并发">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://binlicoder.github.io/img/flash-sale-high-concurrency/0168.png"><script type="application/ld+json">{
+<meta name="twitter:image" content="https://binlicoder.github.io/img/flash-sale-high-concurrency/cover.png"><script type="application/ld+json">{
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "我只点了一下抢购，后台凭什么说这台手机归我？",
+  "headline": "秒杀系统设计：从点击抢购到库存确认",
   "url": "https://binlicoder.github.io/2026/11/21/flash-sale-high-concurrency/",
-  "image": "https://binlicoder.github.io/img/flash-sale-high-concurrency/0168.png",
+  "image": "https://binlicoder.github.io/img/flash-sale-high-concurrency/cover.png",
   "datePublished": "2026-11-21T16:11:56.000Z",
-  "dateModified": "2026-11-21T16:13:21.013Z",
+  "dateModified": "2026-11-21T16:23:25.281Z",
   "author": [
     {
       "@type": "Person",
@@ -199,277 +199,89 @@
   },
   autoDarkmode: false
 }</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
-  title: '我只点了一下抢购，后台凭什么说这台手机归我？',
+  title: '秒杀系统设计：从点击抢购到库存确认',
   isHighlightShrink: false,
   isToc: true,
   pageType: 'post'
-}</script><link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png"><script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script><link rel="stylesheet" href="/css/custom.css?v=20261116e"><meta name="generator" content="Hexo 8.1.2"></head><body><div class="bg-animation" id="web_bg" style="background-color: #100d13;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/profile-transparent.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-circle-info"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">落笔之间</span></a><a class="nav-page-title" href="/"><span class="site-name">我只点了一下抢购，后台凭什么说这台手机归我？</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-circle-info"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">我只点了一下抢购，后台凭什么说这台手机归我？</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-11-21T16:11:56.000Z" title="发表于 2026-11-22 00:11:56">2026-11-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-21T16:13:21.013Z" title="更新于 2026-11-22 00:13:21">2026-11-22</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%8A%80%E6%9C%AF%E5%BC%80%E5%8F%91/">技术开发</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div><article class="container post-content" id="article-container"><p>假设今晚我也来抢这台手机。倒计时归零，我按下「立即抢购」。按钮灰了，页面转了一会儿，跳出三个字：排队中。我的手指还悬在屏幕上。再点一次，会不会有两个订单？不点，刚才那一下到底算不算数？</p>
+}</script><link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png"><script>if(!localStorage.getItem('theme')){document.documentElement.setAttribute('data-theme','dark')}</script><link rel="stylesheet" href="/css/custom.css?v=20261116e"><meta name="generator" content="Hexo 8.1.2"></head><body><div class="bg-animation" id="web_bg" style="background-color: #100d13;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/profile-transparent.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">18</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-circle-info"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">落笔之间</span></a><a class="nav-page-title" href="/"><span class="site-name">秒杀系统设计：从点击抢购到库存确认</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-circle-info"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">秒杀系统设计：从点击抢购到库存确认</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-11-21T16:11:56.000Z" title="发表于 2026-11-22 00:11:56">2026-11-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-21T16:23:25.281Z" title="更新于 2026-11-22 00:23:25">2026-11-22</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%8A%80%E6%9C%AF%E5%BC%80%E5%8F%91/">技术开发</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div><article class="container post-content" id="article-container"><p>晚上八点，我想抢一件只发售 800 份的商品。倒计时一结束，我点了「立即抢购」，页面转了两秒，跳出一句「正在处理」。我本来打算去倒杯水，又把手机拿了起来。刚才那一下到底收到了没有？如果我再点一次，会不会多出一笔待付款的订单？</p>
 <span id="more"></span>
 
-<p>我带着这个疑问去看程序员小Dan讲的秒杀案例。课里备了 1,000 台手机，零点第一秒进来 8 万个下单请求，数据库连接池只有 50 个连接。有人等到超时，重试又挤进来。系统停了 20 分钟，恢复后再盘库存，手机多卖了 <strong>47 台</strong>。</p>
-<p>那 47 台让我惦记了很久。假如我的订单也在里面，页面上明明写着成功，仓库却找不出一台手机给我。于是我想换个位置：就当这次抢购由我来写。从自己的这一下点击开始，我什么时候有把握告诉屏幕另一头的人——可以付款了？</p>
-<p><img src="/img/flash-sale-high-concurrency/0168.png" alt="课程开场的秒杀事故复盘"></p>
-<p><em>视频里的事故现场。左边是请求怎样越积越多，右边是事后清点出来的 47 件超卖商品。</em></p>
-<h2 id="我的请求，先卡在了哪里？"><a href="#我的请求，先卡在了哪里？" class="headerlink" title="我的请求，先卡在了哪里？"></a>我的请求，先卡在了哪里？</h2><p>我先把服务缩小到一台机器。假设 Tomcat 有 200 个工作线程，每条线程接一个请求，查库，拿到结果，再接下一个。一次占用 50 毫秒，一条线程一秒理想情况下能接 20 单，200 条就是 <strong>4,000 QPS</strong>。现在数据库慢了，一次要等 500 毫秒。再做一遍同样的除法：<strong>400 QPS</strong>。</p>
-<p>这下我知道为什么光盯着 CPU 会看走眼了。那多出来的 450 毫秒里，线程可能一直在等连接、等锁、等磁盘。它没做多少运算，手头的请求却还没交差。换作我在手机上等，只觉得按钮转了好久；换到后台看，这段时间里一条线程始终腾不出来。</p>
-<p><img src="/img/flash-sale-high-concurrency/0470.png" alt="200 个工作线程在两种响应时间下的容量算例"></p>
-<p><em>把手指放在图里「慢操作」的位置，就能看到等待是怎样把前面的线程池占满的。</em></p>
-<p>为了把这段等待量清楚，我会在接口入口记三件事：眼下还有多少个请求没结束（并发数），这一秒完成了多少个（吞吐量），进来一趟平均花多久（响应时间，RT）。在相同观察范围内，流量稳定时，这三个数可以互相验算。</p>
-<blockquote>
-<p><strong>平均在途请求数 ≈ 每秒完成的请求数 × 平均响应时间（秒）</strong></p>
-</blockquote>
-<p>比如每秒完成 2,000 次、平均耗时 0.1 秒，接口里就平均有约 200 个请求在途。这里我得留个心眼：拿手机上的总耗时去乘，结果会把排队也算进去；想估线程上限，得用线程实际被占用的时间。回到课程案例，就算应用有 200 条线程，那个池里同时可借出的数据库连接也只有 50 个。</p>
-<h3 id="要是有人问我「这套服务能扛多少」"><a href="#要是有人问我「这套服务能扛多少」" class="headerlink" title="要是有人问我「这套服务能扛多少」"></a>要是有人问我「这套服务能扛多少」</h3><p>我会先讨两个数：大家一天来多少次，又喜欢挤在哪个时段？课程举了一个日活 100 万的例子。先把平时的忙时算明白，再单独看零点那一秒。</p>
+<p>我想用这个场景推演一套自己愿意用的秒杀系统。假设前三秒来了 12,000 次抢购尝试，库存始终只有 800 份。设计时，我会反复回到一个问题：<strong>现在这个页面上的字，后台有证据这么写吗？</strong></p>
+<h2 id="八点之前，我已经把详情页刷了三遍"><a href="#八点之前，我已经把详情页刷了三遍" class="headerlink" title="八点之前，我已经把详情页刷了三遍"></a>八点之前，我已经把详情页刷了三遍</h2><p>我会提前进活动页，看规格、地址能不能送，再习惯性地点几下刷新。更新得最勤的是倒计时，我手里的手机自己就能算。商品图和活动说明很早就定了，可以提前生成静态页面，交给浏览器缓存和 CDN。价格和规格要是还会改，我会给它们独立的缓存策略，结算时再确认最终成交价。</p>
+<p>活动页上那个「还有名额」只做提示。它可能是几秒前的状态。哪怕两千个人同时看见有货，后台也得等他们真的发出抢购请求，再确认谁拿到了名额。我会把这条边界也做进页面里，免得一句「有货」先替仓库许了愿。</p>
+<p>如果每秒有 10,000 次商品详情查询，95% 的缓存命中率意味着每秒约 500 次请求要回源。一旦掉到 90%，回源就变成 1,000 次。我会在看命中率的同一张监控上放回源量。五个百分点听起来挺小，值班的人看到数据库突然多干了一倍的活，感受就很具体。</p>
+<h2 id="我只想买一件，服务端可能收到好几次点击"><a href="#我只想买一件，服务端可能收到好几次点击" class="headerlink" title="我只想买一件，服务端可能收到好几次点击"></a>我只想买一件，服务端可能收到好几次点击</h2><p>12,000 次尝试发生在三秒内，平均每秒 4,000 次。第一秒可能还要尖得多。做容量预算时，我会按秒看峰值，再把商品浏览、抢购和结果查询分开算。抢购接口忙起来的时候，之前已经抢到的人还得能打开订单页。</p>
 <table>
 <thead>
 <tr>
-<th>估算步骤</th>
-<th>计算</th>
-<th>得到什么</th>
+<th>我会在哪里处理</th>
+<th>这一层先做的事</th>
+<th>屏幕上可以怎么说</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>全天请求量</td>
-<td>100 万 × 20</td>
-<td>2,000 万次&#x2F;日</td>
+<td>页面</td>
+<td>提交后暂时禁用按钮。重试时沿用这次操作的请求标识</td>
+<td>正在提交</td>
 </tr>
 <tr>
-<td>忙时平均吞吐</td>
-<td>80% 的请求集中在全天 20% 的时间，即 1,600 万 ÷ 17,280 秒</td>
-<td>约 926 QPS</td>
+<td>网关</td>
+<td>检查登录状态，对用户限频，并控制全站进入抢购服务的速率</td>
+<td>当前请求过多，请稍后再试</td>
 </tr>
 <tr>
-<td>峰值设计目标</td>
-<td>926 × 3，留出忙时内的波动空间</td>
-<td>约 2,800 QPS</td>
+<td>抢购服务</td>
+<td>检查活动时间和资格，找到这次请求已有的记录，或尝试预占</td>
+<td>已留货、正在生成订单，或者本轮名额已占满</td>
+</tr>
+<tr>
+<td>结果查询</td>
+<td>按请求标识或订单号返回已经保存的状态</td>
+<td>待付款、已支付、已取消</td>
 </tr>
 </tbody></table>
-<p>算到 2,800，我会在旁边写上「待压测」。毕竟我自己就是会提前打开页面、盯着倒计时的人。十万人约好零点按按钮，当然不会体贴地把点击均摊到一天里。还有，刷十次商品图和下十笔订单，对数据库的分量也差得远。</p>
-<p><img src="/img/flash-sale-high-concurrency/0610.png" alt="从 CDN、网关、应用缓存到数据库的流量图"></p>
-<p><em>课程用入口 10 万 QPS、到库约 800 QPS 示意分层后的量级。实际到库量，要按各类请求的命中率、放行率和写入量分别算。</em></p>
-<h2 id="开抢前，我已经刷新了好几遍"><a href="#开抢前，我已经刷新了好几遍" class="headerlink" title="开抢前，我已经刷新了好几遍"></a>开抢前，我已经刷新了好几遍</h2><p>我第一次点进详情页，看颜色、内存，再放大主图。过一会儿怕错过时间，又刷新一遍。两次打开之间，那张手机背面的照片连一个像素都没变。为我第二次看同一张图，再叫醒一次数据库，实在冤枉。顺着这页上的内容往回找，我会把它们放在这些地方。</p>
-<table>
-<thead>
-<tr>
-<th>请求需要什么</th>
-<th>可以在哪里回答</th>
-<th>选这一层的理由</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>再次打开相同版本的图片或样式</td>
-<td>浏览器缓存</td>
-<td>资源仍然有效时，用户设备可以直接复用。</td>
-</tr>
-<tr>
-<td>活动页、商品大图、活动规则</td>
-<td>CDN 边缘节点</td>
-<td>活动前生成静态页面，让多数浏览停在离用户较近的节点。</td>
-</tr>
-<tr>
-<td>相同参数、可共享的热点响应</td>
-<td>网关缓存</td>
-<td>合并短时间内的重复访问。含用户私有信息的响应要区分身份。</td>
-</tr>
-<tr>
-<td>极热、读多写少的商品信息</td>
-<td>JVM 本地缓存，如 Caffeine</td>
-<td>省一次网络往返，要付出堆内存，并接受实例之间短暂的版本差异。</td>
-</tr>
-<tr>
-<td>多个应用实例共享的商品详情</td>
-<td>Redis</td>
-<td>各实例复用同一份结果，缓存未命中时再查数据库。</td>
-</tr>
-</tbody></table>
-<p>数据库真正关心的是漏下来的那一小撮。假设我这里每秒有一万次相同类型的读，95% 命中缓存，就有 500 次要回源。哪天监控从 95% 滑到 90%，一眼看上去只掉了五个点，数据库收到的活儿却从 500 次变成了 <strong>1,000 次</strong>。</p>
-<h3 id="我刷新了页面，怎么还是原价？"><a href="#我刷新了页面，怎么还是原价？" class="headerlink" title="我刷新了页面，怎么还是原价？"></a>我刷新了页面，怎么还是原价？</h3><p>假设活动价从 3,000 元改成 2,800 元。我用旁路缓存（Cache Aside）做商品详情，平时先查缓存，找不到才去数据库，把结果存回来，顺手设好有效期（TTL）。改价时，我先提交数据库事务，再删掉旧详情。等下一位顾客打开页面，再按新价拼一份。</p>
-<p>起初我也想过，改价时顺手把缓存里的价格改了，多省事。可一张详情卡里还有活动文案和优惠信息，可能来自好几张表。两次编辑赶在一起，先算好的那份甚至可能最后才写进去。删掉旧卡片，让下一次读取从数据库重建，事情反倒容易讲清。</p>
-<p><img src="/img/flash-sale-high-concurrency/0950.png" alt="旁路缓存读写的步骤"></p>
-<p><em>读路径里，查库只在未命中时发生。写路径里，数据库提交和缓存失效是两个独立动作。</em></p>
-<p>最绕的是把顺序倒过来。假设后台先删缓存，我恰好在这一瞬间刷新。缓存空了，我去数据库取回 3,000 元。就在返回的路上，新价 2,800 元提交成功。接着我把刚读到的 3,000 元写回缓存。好嘛，下一位顾客点进来，旧价又堂堂正正地摆在页面上了。</p>
-<p>所以我选先更库、后删缓存，也会给删失败的操作留一条重试路径，或者订阅数据库变更日志补删。如果碰到很晚才回来的旧读，还可以隔一会儿再删一次，也就是延迟双删。等多久，要看一次慢读和回填实际花多久。至于结账，我希望页面把最终成交价讲清楚；缓存里一张过时的详情卡，做不了付款凭据。</p>
-<h3 id="都是数据库突然忙起来，我该查哪个键？"><a href="#都是数据库突然忙起来，我该查哪个键？" class="headerlink" title="都是数据库突然忙起来，我该查哪个键？"></a>都是数据库突然忙起来，我该查哪个键？</h3><p>我以前容易把穿透、击穿、雪崩三个词记混。带回这个商品页就好分了：是有人一直查一台压根没上架的手机，是今晚的爆款恰好过期了，还是整批商品同时没了缓存？先认出是哪一种，再动手。</p>
-<table>
-<thead>
-<tr>
-<th>现象</th>
-<th>到底发生了什么</th>
-<th>有针对性的处理</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>穿透</td>
-<td>查不存在的商品，缓存和数据库都没有结果。</td>
-<td>对重复的无效 ID 短暂缓存空值。无效 ID 很分散时，可用布隆过滤器排除确定不存在的键。</td>
-</tr>
-<tr>
-<td>击穿</td>
-<td>一个热门商品的键过期，成千上万的读者一起重建同一份详情。</td>
-<td>只允许一个请求回源重建。能接受短暂旧值时，也可先返回旧值，再异步刷新。</td>
-</tr>
-<tr>
-<td>雪崩</td>
-<td>成批键同时过期，或整个缓存节点不可用。</td>
-<td>错开 TTL，避免批量预热后的集中失效。节点故障还需要高可用、限流和降级。</td>
-</tr>
-</tbody></table>
-<p><img src="/img/flash-sale-high-concurrency/1100.png" alt="缓存穿透、击穿和雪崩的案例对照"></p>
-<p><em>同样是回源量猛增，“从未存在的键”“一个热门键”和“一大片键”指向三种不同的处理方式。</em></p>
-<h2 id="倒计时归零，我点了。再点一下呢？"><a href="#倒计时归零，我点了。再点一下呢？" class="headerlink" title="倒计时归零，我点了。再点一下呢？"></a>倒计时归零，我点了。再点一下呢？</h2><p>等页面转圈的时候，我很容易再按一下，理由也很朴素：万一刚才没点上呢？作为写接口的人，我不能指望十万个人都比我有耐心。前端把按钮置灰，能省掉不少重复点击；到了服务端，仍得核对用户、活动资格和这次操作的凭证。把每一下都送到数据库，最后争的还是同一行库存。</p>
-<h3 id="队伍要排多长，我才肯让人进来？"><a href="#队伍要排多长，我才肯让人进来？" class="headerlink" title="队伍要排多长，我才肯让人进来？"></a>队伍要排多长，我才肯让人进来？</h3><p>我先估能同时干活的线程数。对阻塞式 I&#x2F;O，课程给的起点是「核数 ×（1 + 等待时间 ÷ 计算时间）」。8 核，每次算 100 毫秒、等 400 毫秒，可以先用 40 条线程压测。如果这 40 条大多在抢数据库连接，我会先去看连接被谁占着。再多开几十条，只是多了几十个等位的人。</p>
-<p>队列尤其容易给我错觉：请求收进来了，仿佛事情就办成一半了。可要是用户已经等到超时、退出页面，三十秒后后台才轮到这笔操作，他怎么知道自己还有没有单？我会给队列设上限，给下游设超时，一起看活跃线程、积压和拒绝数。满了就明确告知用户，或者在调用方能承压时，让调用线程亲自执行，把提交速度降下来。</p>
-<h3 id="每分钟限-100-次，会不会一秒进来-200-次？"><a href="#每分钟限-100-次，会不会一秒进来-200-次？" class="headerlink" title="每分钟限 100 次，会不会一秒进来 200 次？"></a>每分钟限 100 次，会不会一秒进来 200 次？</h3><table>
-<thead>
-<tr>
-<th>算法</th>
-<th>放行规则</th>
-<th>能从用户侧观察到的差别</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>固定窗口</td>
-<td>每分钟最多放行 100 次，到点清零。</td>
-<td>前一分钟末和后一分钟初可能各通过 100 次，短时间涌入近 200 次。</td>
-</tr>
-<tr>
-<td>滑动窗口</td>
-<td>把时间切成更小的格子，统计最近一段时间的总量。</td>
-<td>跨分钟边界更平滑，精度取决于格子的大小。</td>
-</tr>
-<tr>
-<td>漏桶</td>
-<td>允许请求进入有界队列，按约定的速度流出。</td>
-<td>下游看到的速率较平稳，用户可能等待，队列满时拒绝。</td>
-</tr>
-<tr>
-<td>令牌桶</td>
-<td>按固定速率补充令牌，拿到令牌才放行。</td>
-<td>平时积下的令牌允许一阵短促突发，长期平均速率仍受限。</td>
-</tr>
-</tbody></table>
-<p><img src="/img/flash-sale-high-concurrency/1660.png" alt="固定窗口、滑动窗口、漏桶与令牌桶"></p>
-<p><em>如果上一分钟最后一瞬间来了 100 次，下一分钟刚开始又来 100 次，固定窗口的两次计数都很规矩，下游却实实在在挨了两拨。</em></p>
-<p>给单个用户限频，我会尽量在网关就处理，超额时返回 HTTP 429。核心接口还可以用 Sentinel 单独设限、逐步预热。设规则时有个小坑：十台机器，每台每秒放 100 次，合起来可能是 1,000 次。活动若只有一份全站预算，就得共用计数，例如用 Redis 和 Lua 原子更新。至于预算填几，后面的压测才是依据。</p>
-<h3 id="手机我都挑好了，为什么要等「猜你喜欢」？"><a href="#手机我都挑好了，为什么要等「猜你喜欢」？" class="headerlink" title="手机我都挑好了，为什么要等「猜你喜欢」？"></a>手机我都挑好了，为什么要等「猜你喜欢」？</h3><p>假如我已经把颜色、内存选好，连收货地址都填完了，这时推荐服务卡住，让我陪它等，多少有些不讲理。熔断器做的事很好理解：平时照常调用，记录慢调用和错误；达到阈值，暂时停调。等一会儿，放几次请求试一试。探测成功就恢复，还是慢就再等等。这三种状态叫关闭、打开和半开。</p>
-<p><img src="/img/flash-sale-high-concurrency/1930.png" alt="熔断器的三个状态和降级示例"></p>
-<p><em>看图时把两件事分开：熔断器决定还调不调下游，降级逻辑决定此时用户能看到什么。</em></p>
-<p>作为顾客，我大概不会介意今晚少看一排推荐，晚几分钟收到积分也行。可我会很在乎「排队中」这三个字究竟算什么。若后台已经可靠地收下我的请求、给我一个能查询的结果，我愿意等。若连请求都没记住，这行字只会让我舍不得关掉页面。</p>
-<h2 id="只剩一台，我和你都看见了「有货」"><a href="#只剩一台，我和你都看见了「有货」" class="headerlink" title="只剩一台，我和你都看见了「有货」"></a>只剩一台，我和你都看见了「有货」</h2><p>现在假设只剩最后一台。我们俩同时点下去，我这边读到 1，你那边也读到 1。两边都算出「1 减 1 等于 0」，也都把 0 写了回去。运营打开库存表，数字好端端地停在零；打开订单表，才看见有两个人等着收货。<strong>库存从头到尾都没负过，这台手机照样卖了两次。</strong></p>
-<p>如果这段代码由我写，我会把「还有吗」和「给我留一件」交给数据库一次做完：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> seckill_stock</span><br><span class="line"><span class="keyword">SET</span> stock <span class="operator">=</span> stock <span class="operator">-</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">WHERE</span> sku_id <span class="operator">=</span> ? <span class="keyword">AND</span> stock <span class="operator">&gt;</span> <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+<p>按钮置灰只能拦住当前页面那根手指。浏览器超时会重新发，同一个人也能拿两部手机来点。我会让服务端记住同一次请求的标识，认出它来过，就把已有状态还给用户。再给预占记录加上活动和用户的唯一约束，保证换一个标识也占不到第二份。这场活动我设定每人最多拿到一次名额，超时放回的货留给其他人。</p>
+<p>如果网关当下忙不过来，我宁愿它尽早给一个明确的提示。进入服务就开始无期限排队的话，我关掉浏览器半分钟后，后台才突然替我做完一笔交易，回来一看难免要愣一下。我还会用有上限的线程池和等待队列，避免延迟上升时仍一味收请求。已经提交成功的用户还得查订单，这点容量应当单独留出来。</p>
+<p><img src="/img/flash-sale-high-concurrency/request-flow.png" alt="抢购请求经过网关校验和库存预占，再异步生成订单"></p>
+<p><em>只有预占事务提交后，页面才可以说「已留货」。</em></p>
+<h2 id="最后一份库存，我会在一个事务里划走"><a href="#最后一份库存，我会在一个事务里划走" class="headerlink" title="最后一份库存，我会在一个事务里划走"></a>最后一份库存，我会在一个事务里划走</h2><p>假设库存只剩一份。我和你同时点进来，我读到 1，你也读到 1。如果应用各自在内存里算出「1 减 1 等于 0」，再把 0 写回数据库，两次更新都可能执行成功，接着各发一份待付款通知。库存表看上去没什么毛病，出问题的是有两个人等同一件货。</p>
+<p>我会让数据库在写入的那一刻再检查库存：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> activity_stock</span><br><span class="line"><span class="keyword">SET</span> available <span class="operator">=</span> available <span class="operator">-</span> <span class="number">1</span>,</span><br><span class="line">    reserved <span class="operator">=</span> reserved <span class="operator">+</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">WHERE</span> activity_id <span class="operator">=</span> ? <span class="keyword">AND</span> available <span class="operator">&gt;</span> <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
 
-<p>关键在最后那几个字。假设我们俩都更新同一条商品记录，第一个事务把库存从 1 扣到 0 并提交，第二个再执行更新时，条件已经不成立。接下来应用还得看一眼影响行数：拿到 1 才能往下走，拿到 0 就该告诉对方售罄。少看这一眼，数据库守住了库存，页面照样敢报喜。</p>
-<p><img src="/img/flash-sale-high-concurrency/2380.png" alt="数据库条件扣减与 Redis 原子预扣"></p>
-<p><em>图中的两次原子操作各自保护一份数据：Redis 决定是否发放预占名额，数据库决定真实库存是否扣减成功。</em></p>
-<p>不过，让八万人挨个找数据库问一遍「还有吗」，还是太贵。我会把第一轮预占放进 Redis，用 Lua 在一次执行里完成判断和扣减。售罄的请求到这里就结束，拿到名额的再去建单。这里有个容易让人高兴早了的区别：Redis 给我留了一份名额，并不等于订单已经落库。中间那条建单消息发没发到、会不会发两遍，还得有人管。</p>
-<h3 id="我还要为这台手机再加一把锁吗？"><a href="#我还要为这台手机再加一把锁吗？" class="headerlink" title="我还要为这台手机再加一把锁吗？"></a>我还要为这台手机再加一把锁吗？</h3><p>就上面这条 SQL 而言，我会停手。数据库已经把判断和扣减合成一步了。换个场景，若多台 JVM 上有一段业务确实要互斥执行，单机的 <code>synchronized</code> 才会力不从心。这时可按「用户＋商品」等粒度使用共享锁，给等待设上限，在异常路径也由持有者释放。用 Redisson 时，显式指定固定租期和让看门狗自动续期是两种模式。业务跑得比固定租期更久，后一个请求可能在前一个做完之前就进来。</p>
-<h3 id="十秒钟的洪峰，要用多久消化？"><a href="#十秒钟的洪峰，要用多久消化？" class="headerlink" title="十秒钟的洪峰，要用多久消化？"></a>十秒钟的洪峰，要用多久消化？</h3><p>如果我抢到了一个名额，我能接受短信晚到几秒。先把建单任务可靠地投递进消息队列，订单服务就能按数据库承受得起的速度处理。这里我最怕一个很普通的插曲：订单已经建好，消费确认却丢了，同一条消息又来一遍。用稳定的订单号做幂等，就是让后台看得出「这单刚才办过」，别再扣我一件库存。</p>
-<p><img src="/img/flash-sale-high-concurrency/2100.png" alt="同步下单和通过消息队列异步处理的对照"></p>
-<p><em>同步路径把等待留给用户，异步路径把部分等待移进队列。两者都要为实际的写入工作付出资源。</em></p>
-<p>队列要存多少？假设一秒进 8,000 条，只能办完 2,000 条，十秒后就攒下 <strong>60,000 条</strong>。即使此刻入口彻底安静，也还要约 30 秒才能清空。换到手机这头，那就是盯着「排队中」等上半分钟。如果连消息都没投进去，等再久也等不来订单。因此预占得有记录，投递失败得能补偿，用户离开页面再回来，也应该查得到刚才那一单。</p>
-<h3 id="把刚才那一下点击，从头对一遍"><a href="#把刚才那一下点击，从头对一遍" class="headerlink" title="把刚才那一下点击，从头对一遍"></a>把刚才那一下点击，从头对一遍</h3><p><img src="/img/flash-sale-high-concurrency/3020.png" alt="秒杀从用户端到订单服务的三层漏斗"></p>
-<p><em>沿箭头从左向右看，请求的单位在变化：最初是一次访问，中间是一次抢购尝试，最后才是一份值得落库的订单。</em></p>
-<p><strong>我按下按钮时</strong></p>
-<ol>
-<li>用户点击抢购。按钮置灰减少重复点击，提交时携带一次性凭证。</li>
-<li>网关检查登录状态、访问频率和黑名单，超额请求在这里结束。</li>
-<li>秒杀服务核对活动时间、购买资格，以及用户是否已参与。</li>
-</ol>
-<p><strong>页面告诉我「排队中」时</strong></p>
-<ol start="4">
-<li>Redis 原子检查并预扣一份可售库存。</li>
-<li>预扣失败就返回售罄。售罄状态可以传到更靠前的层级，减少后续无效请求。</li>
-<li>预扣成功后可靠投递建单消息，向用户返回可查询的受理状态。</li>
-<li>消费者按订单标识幂等建单，重投的消息不会生成第二笔订单。</li>
-<li>数据库执行带库存条件的扣减。建单状态与扣减结果要协调，失败时进入明确的回滚或补偿路径。</li>
-</ol>
-<p><strong>我去付款，或者临时改了主意</strong></p>
-<ol start="9">
-<li>用户支付后确认订单。课程示例为 15 分钟未支付自动关单；取消时释放预占，并防止重复关单把一份名额加回两次。</li>
-<li>用户可以查询或接收处理结果，在订单可支付时继续支付，在失败或关闭时结束等待。</li>
-<li>后台按一致的库存口径核对可售量、未付预占和已确认订单。出现差异时能定位到具体订单，才能知道该补建、释放还是人工处理。</li>
-</ol>
-<h2 id="等订单的时候，顺便看看数据库在忙什么"><a href="#等订单的时候，顺便看看数据库在忙什么" class="headerlink" title="等订单的时候，顺便看看数据库在忙什么"></a>等订单的时候，顺便看看数据库在忙什么</h2><p>假设客服要帮我查「今天的订单」。人只问了一天，数据库却可能翻过两百万行。一个很顺手的写法是给索引列套上 <code>DATE(create_time)</code>，再和日期比较。意思一眼就懂，普通时间索引却可能用不上。我更愿意把起点和终点直接交给数据库：从今天零点开始，到明天零点为止。</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> order_id, create_time</span><br><span class="line"><span class="keyword">FROM</span> orders</span><br><span class="line"><span class="keyword">WHERE</span> create_time <span class="operator">&gt;=</span> <span class="string">&#x27;2026-10-25 00:00:00&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> create_time <span class="operator">&lt;</span>  <span class="string">&#x27;2026-10-26 00:00:00&#x27;</span>;</span><br></pre></td></tr></table></figure>
-
-<p>课件里，这点改动让扫描量从约 200 万行降到约 5,000 行，耗时从 1.8 秒降到 3 毫秒。我不会把这个倍数直接套到自己的表上，但会先翻慢查询日志，挑那些反复出现、每回又翻很多行的 SQL，用 <code>EXPLAIN</code> 看执行计划。索引前缀、类型转换、深分页和长事务，都值得在买新机器之前看一眼。</p>
-<h3 id="数据库喊忙，我会先看它忙的是什么"><a href="#数据库喊忙，我会先看它忙的是什么" class="headerlink" title="数据库喊忙，我会先看它忙的是什么"></a>数据库喊忙，我会先看它忙的是什么</h3><table>
-<thead>
-<tr>
-<th>观测到的瓶颈</th>
-<th>值得先尝试什么</th>
-<th>随之要处理的问题</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>普通读占大头，主库读压力高</td>
-<td>把可容忍延迟的读分给从库。</td>
-<td>复制有延迟，用户刚改完资料后的读取可能需要走主库。</td>
-</tr>
-<tr>
-<td>订单表很大，绝大多数查询只看近期订单</td>
-<td>归档历史订单，缩小热数据集。</td>
-<td>历史查询要有明确入口，也要验证归档后热查询确实变快。</td>
-</tr>
-<tr>
-<td>写压力分布在大量独立订单上，单库已成瓶颈</td>
-<td>按常用访问路径选择分片键并评估分库分表。</td>
-<td>跨片查询、全局 ID、迁移和跨库事务会增加成本。</td>
-</tr>
-<tr>
-<td>大家争的是同一个爆款商品</td>
-<td>在入口预扣，并缩短真实扣减事务。</td>
-<td>给订单表加分片，仍然解决不了对同一库存行的争抢。</td>
-</tr>
-</tbody></table>
-<p><img src="/img/flash-sale-high-concurrency/2690.png" alt="读写分离、分库分表与分片键的选择"></p>
-<p><em>以“我的订单”为例，按用户分片可以让常见查询只访问一个分片。分片方案要从最常执行的查询反推。</em></p>
-<p>轮到应用扩容，我会做个很生活化的试验：登录，选好手机，然后在付款前把当前实例的流量全切走。再点一下，如果页面突然请我重新登录，多半有会话只存在旧机器上。会话放到共享存储，文件放对象存储，定时任务协调执行，本地只留丢了也能重建的缓存。做到这一步，新加一台机器，才真的有人能去它那儿结账。</p>
-<h2 id="活动前夜，我敢在容量表上填多少？"><a href="#活动前夜，我敢在容量表上填多少？" class="headerlink" title="活动前夜，我敢在容量表上填多少？"></a>活动前夜，我敢在容量表上填多少？</h2><p>还记得前面铅笔写下的 2,800 QPS 吗？现在该拿数据来对了。下面是课程里的 JMeter 阶梯压测，每档大约跑三分钟。我会先遮住最后一列，只看吞吐，试试自己会在哪一行停下来。</p>
+<p>在同一行上，第一个请求提交后，可售库存变成 0。另一个请求更新时条件已经不满足，影响行数为零。应用要检查更新结果。拿到名额的请求可以继续提交事务，没拿到的就结束这一轮。</p>
+<p>我会在同一个数据库事务里做三件事：<strong>记下这位用户的预占、更新库存、保存一条待发送的建单任务</strong>。如果扣减失败，整笔回滚。事务提交之后，接口才可以回「已留货，正在生成订单」。如果客户端没等到这个响应，重试时后台可以靠已有的预占记录回答刚才那一下算不算数。</p>
+<p>这套设计先让数据库记一份库存账。网关负责挡住超额请求，售罄提示也可以缓存，但账上的数字只有交易事务能改。要是以后考虑用 Redis 提前预扣，我得先解释清楚每次预扣怎样落到真实库存，失败又怎么补偿。对这个 800 份的活动，我会先测单行扣减的锁等待，看看它在保住延迟的情况下能接多少写入，再决定是否需要多维护一份账。</p>
+<h2 id="我去倒杯水回来，订单应该查得到"><a href="#我去倒杯水回来，订单应该查得到" class="headerlink" title="我去倒杯水回来，订单应该查得到"></a>我去倒杯水回来，订单应该查得到</h2><p>如果预占一成功就同步建单、发通知，再等下游逐个回执，手机上的等待会越来越长。我会让事务里那条待发送记录负责建单的后续工作。这种做法通常叫 <strong>事务性发件箱（Transactional Outbox）</strong>。后台进程读取记录、发送建单消息。发送超时，可以再发一遍。订单服务以预占编号做唯一约束，收到同一条任务两次，也只生成一笔单。</p>
+<p>这里最容易漏掉的是这样一秒：订单服务刚把记录写好，准备确认消息，进程就停了。重启后消息又来一遍。对我的手机来说，订单页理应仍然只有一行。用数据库约束做幂等，这个要求就有了可以检验的结果。</p>
+<p>队列也有自己的时间账。假如建单消费实测每秒能处理 200 条，800 个名额都已预占，而且同时抵达队列，排空大约需要 4 秒，暂且忽略网络和重试。要是最旧的任务已经等了几分钟，状态页的「稍等片刻」就有点含糊了。我会监控队列里最早一条还没处理的任务等了多久，超过预期及时告警。用户此时关掉页面，回来还可以用同一个入口查看进度。</p>
+<p>还要有人处理一直建不成的单。我会给预占到建单设一个独立的超时。确认没有生成可付款的订单后，把这份预占取消并归还库存。建单任务晚到了，就先核对预占还有效，再决定能不能继续。这和后面的十分钟付款期限是两段不同的等待。</p>
+<h2 id="有人没付款，这一份怎样才能放回去？"><a href="#有人没付款，这一份怎样才能放回去？" class="headerlink" title="有人没付款，这一份怎样才能放回去？"></a>有人没付款，这一份怎样才能放回去？</h2><p>抢到以后未必会买。也许我临时发现地址不对，也许我放下手机就把这件事忘了。我会从订单进入待付款时开始给十分钟。超时先把订单置为关单处理中，向支付渠道查明结果。确认已经支付，就继续履约。能确认支付已关闭且未成功，才取消订单、归还一份库存。</p>
+<p>最难判断的是我在最后一秒按下「确认支付」。任务调度器可能先发现单子超时，支付成功通知晚一点才送到。如果查单暂时得不到确定答案，我会继续保留这份库存，重试核实。多占几十秒我还能解释。把同一份货释放给下一位，再回来告诉已付款的用户发不了货，就很难解释了。</p>
+<p><img src="/img/flash-sale-high-concurrency/stock-states.png" alt="库存预占、支付成功和超时释放的状态图"></p>
+<p><em>付成一单，就把一份已预占库存转为已售。确认支付已经关闭，才把它转回可售。</em></p>
+<p>我会让订单状态和库存变化在事务里一起提交。比如，关单任务需要先命中「关单处理中」的记录，并确认只更新了一行，才能把已预占减一、可售加一。任务又跑一遍时，那笔订单已经取消，就不会再退第二次。</p>
 <table>
 <thead>
 <tr>
-<th align="right">并发数</th>
-<th align="right">吞吐量</th>
-<th align="right">响应时间</th>
-<th align="right">错误率</th>
+<th>我查到的状态</th>
+<th>这份货在账上放哪儿</th>
 </tr>
 </thead>
 <tbody><tr>
-<td align="right">50</td>
-<td align="right">920 QPS</td>
-<td align="right">54 ms</td>
-<td align="right">0%</td>
+<td>已预占、待付款、关单处理中</td>
+<td>已预占</td>
 </tr>
 <tr>
-<td align="right">100</td>
-<td align="right">1,740 QPS</td>
-<td align="right">57 ms</td>
-<td align="right">0%</td>
+<td>已支付</td>
+<td>已售</td>
 </tr>
 <tr>
-<td align="right">200</td>
-<td align="right">2,870 QPS</td>
-<td align="right">70 ms</td>
-<td align="right">0%</td>
-</tr>
-<tr>
-<td align="right"><strong>400</strong></td>
-<td align="right"><strong>2,910 QPS</strong></td>
-<td align="right"><strong>137 ms</strong></td>
-<td align="right"><strong>0.2%</strong></td>
+<td>已取消并释放</td>
+<td>已归入可售库存</td>
 </tr>
 </tbody></table>
-<p>只报最高成绩，我可以写 2,910 QPS。可把手指移回上一行，200 并发已经有 2,870 QPS 了。再加 200 个并发，只多做了 <strong>40 次&#x2F;秒</strong>，大家等的时间却从 70 毫秒涨到 137 毫秒。再看刚才遮住的错误率：已经有人请求失败了。这是我会圈出来继续排查的一档，拿它当日常容量，余量实在太薄。</p>
-<p><img src="/img/flash-sale-high-concurrency/3290.png" alt="JMeter 阶梯压测的四档结果"></p>
-<p><em>看最后两行的三个指标：吞吐几乎走平、耗时上升、错误出现，这比单独报告一次最高 QPS 更能说明问题。</em></p>
-<p>我会在这一档同时翻几条曲线：谁先开始排队，应用线程、数据库连接，还是热点行的锁？缓存一冷下来，这个结果还成立吗？测试时还要把浏览和下单按实际比例混在一起，带上接近生产的数据量，看慢的那批用户等了多久。毕竟轮到我抢的时候，「平均挺快」对着屏幕上的转圈也没什么安慰。</p>
-<h2 id="我什么时候敢让你去付款"><a href="#我什么时候敢让你去付款" class="headerlink" title="我什么时候敢让你去付款"></a>我什么时候敢让你去付款</h2><p>假如明晚就要开抢，我想在下班前亲手试两回。</p>
-<p>第一回，把浏览、刷新、下单一起压上去，直到系统开始拒绝请求。我会留一部手机在手边，看看一个普通人此时究竟会读到什么。「已售罄」我看得懂，「已受理，请到订单页查看」我也知道下一步去哪。最让人犹豫的是转了半天回到原页，按钮又亮了，仿佛刚才什么都没发生。</p>
-<p>第二回，只放一台手机，请两个人同时抢。把胜出那笔的建单消息再投一次，再让它超时关单，把关单通知也重放一次。我想亲眼看到三件事：第一轮只有一个人拿到单，取消后只放回一台，下一位买家确实能买走它。到这里，我才敢把支付按钮交给用户。</p>
-<p>想起开头那根悬在屏幕上的手指，我最希望它能放心地收回去。抢到了，就有一台手机等我付款；没抢到，就早点告诉我，我也好关了闹钟去睡觉。</p>
-<hr>
-<p><strong>原视频与配图</strong>　本文根据程序员小Dan的课程整理，文中 12 张配图均截取自原视频。流量、库存和压测数字为课程案例，文中据此补充了回源量、积压量等计算。<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ZYnS6xExr">《软件架构：一小时掌握高并发架构》</a></p>
-<p><strong>按主题回看</strong>　<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ZYnS6xExr?t=668">容量估算</a> · <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ZYnS6xExr?t=780">缓存与一致性</a> · <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ZYnS6xExr?t=1374">流量治理</a> · <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ZYnS6xExr?t=2319">原子扣减</a> · <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ZYnS6xExr?t=2984">完整秒杀链路</a> · <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ZYnS6xExr?t=3245">阶梯压测</a></p>
-</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://binlicoder.github.io">binlicoder</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://binlicoder.github.io/2026/11/21/flash-sale-high-concurrency/">https://binlicoder.github.io/2026/11/21/flash-sale-high-concurrency/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://binlicoder.github.io" target="_blank">落笔之间</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a><a class="post-meta__tags" href="/tags/Redis/">Redis</a><a class="post-meta__tags" href="/tags/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">系统设计</a></div><div class="post-share"><div class="social-share" data-image="/img/flash-sale-high-concurrency/0168.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/11/19/linux-useradd-permissions-ssh-cron/" title="Linux 日常管理实战｜从 useradd 到共享目录和定时归档"><img class="cover" src="/img/linux-useradd-teamshare.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Linux 日常管理实战｜从 useradd 到共享目录和定时归档</div></div><div class="info-2"><div class="info-item-1">新同事需要上服务器更新项目资料。给她开一个独立的账号，让她用自己的 SSH 密钥登录，再通过用户组开放一个共享目录。最后，把共享目录的日常归档交给定时任务。这个流程可以直接用在小团队的开发机上。 示例使用 Ubuntu 或 Debian，管理员已有 sudo 权限。账号叫 alice，项目组叫 siteops，新建的共享目录是 /srv/teamshare。命令里的 server.example.com 换成自己的服务器地址。   用 useradd 建账号，用 usermod 给权限先检查账号和组名是否已被使用。全新环境中，这两条查询都没有输出。已有项目组可以直接复用。 12getent passwd alicegetent group siteops  123456sudo groupadd siteopssudo useradd -m -U -s /bin/bash alicesudo passwd alicesudo usermod -aG siteops aliceid alicesudo -iu alice id   -m 创建家目录，-U 创建同名主组，-s 指定登...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/11/19/macos-brew-postgresql-redis/" title="macOS 用 Homebrew 本地部署 PostgreSQL 和 Redis"><img class="cover" src="/img/macos-brew-postgresql-redis.webp" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-19</div><div class="info-item-2">macOS 用 Homebrew 本地部署 PostgreSQL 和 Redis</div></div><div class="info-2"><div class="info-item-1">在 Mac 上开发一个待办事项应用，通常会用 PostgreSQL 保存任务，用 Redis 缓存查询结果。用 Homebrew 可以在本机启动这两个服务，然后用终端完成从建库到缓存读写的整套流程。 下面用 PostgreSQL 18 和 Homebrew 的 redis 包演示。数据库和缓存都运行在这台 Mac 上，项目通过 127.0.0.1 连接。   安装和启动服务先运行 brew --version。如果终端找不到 brew，可以先看 macOS 上手 Homebrew 配好环境。 1brew install postgresql@18 redis  为了让终端优先找到 PostgreSQL 18 的命令，把它的 bin 目录放到 PATH 前面。brew --prefix 会给出当前 Mac 上的安装路径。 123export PATH=&quot;$(brew --prefix postgresql@18)/bin:$PATH&quot;psql --versionredis-cli --version  这行 export 对当前终端窗口生效。日常使用 zsh 的...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/profile-transparent.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">binlicoder</div><div class="author-info-description">一个程序员的技术探索、生活记录与成长手记。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/binlicoder"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/binlicoder" target="_blank" title="GitHub"><i class="fab fa-github"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E7%9A%84%E8%AF%B7%E6%B1%82%EF%BC%8C%E5%85%88%E5%8D%A1%E5%9C%A8%E4%BA%86%E5%93%AA%E9%87%8C%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">我的请求，先卡在了哪里？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A6%81%E6%98%AF%E6%9C%89%E4%BA%BA%E9%97%AE%E6%88%91%E3%80%8C%E8%BF%99%E5%A5%97%E6%9C%8D%E5%8A%A1%E8%83%BD%E6%89%9B%E5%A4%9A%E5%B0%91%E3%80%8D"><span class="toc-number">1.1.</span> <span class="toc-text">要是有人问我「这套服务能扛多少」</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E6%8A%A2%E5%89%8D%EF%BC%8C%E6%88%91%E5%B7%B2%E7%BB%8F%E5%88%B7%E6%96%B0%E4%BA%86%E5%A5%BD%E5%87%A0%E9%81%8D"><span class="toc-number">2.</span> <span class="toc-text">开抢前，我已经刷新了好几遍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%91%E5%88%B7%E6%96%B0%E4%BA%86%E9%A1%B5%E9%9D%A2%EF%BC%8C%E6%80%8E%E4%B9%88%E8%BF%98%E6%98%AF%E5%8E%9F%E4%BB%B7%EF%BC%9F"><span class="toc-number">2.1.</span> <span class="toc-text">我刷新了页面，怎么还是原价？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%83%BD%E6%98%AF%E6%95%B0%E6%8D%AE%E5%BA%93%E7%AA%81%E7%84%B6%E5%BF%99%E8%B5%B7%E6%9D%A5%EF%BC%8C%E6%88%91%E8%AF%A5%E6%9F%A5%E5%93%AA%E4%B8%AA%E9%94%AE%EF%BC%9F"><span class="toc-number">2.2.</span> <span class="toc-text">都是数据库突然忙起来，我该查哪个键？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%92%E8%AE%A1%E6%97%B6%E5%BD%92%E9%9B%B6%EF%BC%8C%E6%88%91%E7%82%B9%E4%BA%86%E3%80%82%E5%86%8D%E7%82%B9%E4%B8%80%E4%B8%8B%E5%91%A2%EF%BC%9F"><span class="toc-number">3.</span> <span class="toc-text">倒计时归零，我点了。再点一下呢？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%9F%E4%BC%8D%E8%A6%81%E6%8E%92%E5%A4%9A%E9%95%BF%EF%BC%8C%E6%88%91%E6%89%8D%E8%82%AF%E8%AE%A9%E4%BA%BA%E8%BF%9B%E6%9D%A5%EF%BC%9F"><span class="toc-number">3.1.</span> <span class="toc-text">队伍要排多长，我才肯让人进来？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AF%8F%E5%88%86%E9%92%9F%E9%99%90-100-%E6%AC%A1%EF%BC%8C%E4%BC%9A%E4%B8%8D%E4%BC%9A%E4%B8%80%E7%A7%92%E8%BF%9B%E6%9D%A5-200-%E6%AC%A1%EF%BC%9F"><span class="toc-number">3.2.</span> <span class="toc-text">每分钟限 100 次，会不会一秒进来 200 次？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E6%9C%BA%E6%88%91%E9%83%BD%E6%8C%91%E5%A5%BD%E4%BA%86%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%AD%89%E3%80%8C%E7%8C%9C%E4%BD%A0%E5%96%9C%E6%AC%A2%E3%80%8D%EF%BC%9F"><span class="toc-number">3.3.</span> <span class="toc-text">手机我都挑好了，为什么要等「猜你喜欢」？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AA%E5%89%A9%E4%B8%80%E5%8F%B0%EF%BC%8C%E6%88%91%E5%92%8C%E4%BD%A0%E9%83%BD%E7%9C%8B%E8%A7%81%E4%BA%86%E3%80%8C%E6%9C%89%E8%B4%A7%E3%80%8D"><span class="toc-number">4.</span> <span class="toc-text">只剩一台，我和你都看见了「有货」</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%91%E8%BF%98%E8%A6%81%E4%B8%BA%E8%BF%99%E5%8F%B0%E6%89%8B%E6%9C%BA%E5%86%8D%E5%8A%A0%E4%B8%80%E6%8A%8A%E9%94%81%E5%90%97%EF%BC%9F"><span class="toc-number">4.1.</span> <span class="toc-text">我还要为这台手机再加一把锁吗？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%81%E7%A7%92%E9%92%9F%E7%9A%84%E6%B4%AA%E5%B3%B0%EF%BC%8C%E8%A6%81%E7%94%A8%E5%A4%9A%E4%B9%85%E6%B6%88%E5%8C%96%EF%BC%9F"><span class="toc-number">4.2.</span> <span class="toc-text">十秒钟的洪峰，要用多久消化？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%8A%E5%88%9A%E6%89%8D%E9%82%A3%E4%B8%80%E4%B8%8B%E7%82%B9%E5%87%BB%EF%BC%8C%E4%BB%8E%E5%A4%B4%E5%AF%B9%E4%B8%80%E9%81%8D"><span class="toc-number">4.3.</span> <span class="toc-text">把刚才那一下点击，从头对一遍</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AD%89%E8%AE%A2%E5%8D%95%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8C%E9%A1%BA%E4%BE%BF%E7%9C%8B%E7%9C%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9C%A8%E5%BF%99%E4%BB%80%E4%B9%88"><span class="toc-number">5.</span> <span class="toc-text">等订单的时候，顺便看看数据库在忙什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E5%96%8A%E5%BF%99%EF%BC%8C%E6%88%91%E4%BC%9A%E5%85%88%E7%9C%8B%E5%AE%83%E5%BF%99%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">5.1.</span> <span class="toc-text">数据库喊忙，我会先看它忙的是什么</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B4%BB%E5%8A%A8%E5%89%8D%E5%A4%9C%EF%BC%8C%E6%88%91%E6%95%A2%E5%9C%A8%E5%AE%B9%E9%87%8F%E8%A1%A8%E4%B8%8A%E5%A1%AB%E5%A4%9A%E5%B0%91%EF%BC%9F"><span class="toc-number">6.</span> <span class="toc-text">活动前夜，我敢在容量表上填多少？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E6%95%A2%E8%AE%A9%E4%BD%A0%E5%8E%BB%E4%BB%98%E6%AC%BE"><span class="toc-number">7.</span> <span class="toc-text">我什么时候敢让你去付款</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/21/flash-sale-high-concurrency/" title="我只点了一下抢购，后台凭什么说这台手机归我？">我只点了一下抢购，后台凭什么说这台手机归我？</a><time datetime="2026-11-21T16:11:56.000Z" title="发表于 2026-11-22 00:11:56">2026-11-22</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/19/linux-useradd-permissions-ssh-cron/" title="Linux 日常管理实战｜从 useradd 到共享目录和定时归档">Linux 日常管理实战｜从 useradd 到共享目录和定时归档</a><time datetime="2026-11-19T10:01:22.000Z" title="发表于 2026-11-19 18:01:22">2026-11-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/19/macos-brew-postgresql-redis/" title="macOS 用 Homebrew 本地部署 PostgreSQL 和 Redis">macOS 用 Homebrew 本地部署 PostgreSQL 和 Redis</a><time datetime="2026-11-19T09:50:22.000Z" title="发表于 2026-11-19 17:50:22">2026-11-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/06/shanghai-internship-notes/" title="在上海实习的日子，把成长写进日常">在上海实习的日子，把成长写进日常</a><time datetime="2026-11-06T04:00:00.000Z" title="发表于 2026-11-06 12:00:00">2026-11-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/05/macos-homebrew-guide/" title="macOS 上手 Homebrew：让软件安装和更新更简单">macOS 上手 Homebrew：让软件安装和更新更简单</a><time datetime="2026-11-05T10:30:00.000Z" title="发表于 2026-11-05 18:30:00">2026-11-05</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By binlicoder</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"></div><script src="/js/article-layout.js?v=20261105i" defer></script><script src="/js/music-player.js?v=20261116a" defer></script><script src="/js/home-layout.js?v=20261105d" defer></script><script src="/js/error-layout.js?v=20261111a" defer></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
+<p>拿活动结束前的一刻对账。假设总数是 800，已有 600 份支付，150 份正在等付款或确认关单，账上就应当还有 50 份可售。如果查出来有 51 份，我会顺着预占编号查，看看是哪个任务多退了一次，或者哪一笔状态写进去、库存没跟上。</p>
+<h2 id="这个活动上线前，我会在手机上试什么？"><a href="#这个活动上线前，我会在手机上试什么？" class="headerlink" title="这个活动上线前，我会在手机上试什么？"></a>这个活动上线前，我会在手机上试什么？</h2><p>我会先测高峰结束以后，谁还等不到结果。压测时一起跑浏览、抢购和结果查询。从低流量逐档加，盯着成功率、P95 和 P99 延迟、数据库连接等待、队列最早一条任务等了多久，再看性能开始变坏时哪一层先排队。如果吞吐已经上不去，等待时间却继续涨，我会把入口放行速率设在拐点之前。推荐和评价可以暂时少加载一点，抢到的人仍要能看见订单。</p>
+<p>接下来只留一份货，请两个人同时抢。然后把成功那笔的建单消息重发一遍，确认只有一张订单。再让订单在付款与超时交界处卡一下，分别试支付确认先到、关单检查先到、支付查询暂时超时。我想看清这份库存每一步去了哪里，最后能不能和订单一笔笔对上。</p>
+<p>做完这些，我再拿起自己的手机点一遍。抢到了，订单页有一笔待付款的单，十分钟从这里开始算。没抢到，页面早点告诉我这轮名额满了。要是还在处理，我可以先去倒那杯水，回来照样知道刚才那一下去了哪里。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://binlicoder.github.io">binlicoder</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://binlicoder.github.io/2026/11/21/flash-sale-high-concurrency/">https://binlicoder.github.io/2026/11/21/flash-sale-high-concurrency/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://binlicoder.github.io" target="_blank">落笔之间</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/">高并发</a><a class="post-meta__tags" href="/tags/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">系统设计</a><a class="post-meta__tags" href="/tags/%E5%BA%93%E5%AD%98/">库存</a></div><div class="post-share"><div class="social-share" data-image="/img/flash-sale-high-concurrency/cover.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/11/19/linux-useradd-permissions-ssh-cron/" title="Linux 日常管理实战｜从 useradd 到共享目录和定时归档"><img class="cover" src="/img/linux-useradd-teamshare.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Linux 日常管理实战｜从 useradd 到共享目录和定时归档</div></div><div class="info-2"><div class="info-item-1">新同事需要上服务器更新项目资料。给她开一个独立的账号，让她用自己的 SSH 密钥登录，再通过用户组开放一个共享目录。最后，把共享目录的日常归档交给定时任务。这个流程可以直接用在小团队的开发机上。 示例使用 Ubuntu 或 Debian，管理员已有 sudo 权限。账号叫 alice，项目组叫 siteops，新建的共享目录是 /srv/teamshare。命令里的 server.example.com 换成自己的服务器地址。   用 useradd 建账号，用 usermod 给权限先检查账号和组名是否已被使用。全新环境中，这两条查询都没有输出。已有项目组可以直接复用。 12getent passwd alicegetent group siteops  123456sudo groupadd siteopssudo useradd -m -U -s /bin/bash alicesudo passwd alicesudo usermod -aG siteops aliceid alicesudo -iu alice id   -m 创建家目录，-U 创建同名主组，-s 指定登...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/profile-transparent.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">binlicoder</div><div class="author-info-description">一个程序员的技术探索、生活记录与成长手记。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">18</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/binlicoder"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/binlicoder" target="_blank" title="GitHub"><i class="fab fa-github"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E7%82%B9%E4%B9%8B%E5%89%8D%EF%BC%8C%E6%88%91%E5%B7%B2%E7%BB%8F%E6%8A%8A%E8%AF%A6%E6%83%85%E9%A1%B5%E5%88%B7%E4%BA%86%E4%B8%89%E9%81%8D"><span class="toc-number">1.</span> <span class="toc-text">八点之前，我已经把详情页刷了三遍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E5%8F%AA%E6%83%B3%E4%B9%B0%E4%B8%80%E4%BB%B6%EF%BC%8C%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%8F%AF%E8%83%BD%E6%94%B6%E5%88%B0%E5%A5%BD%E5%87%A0%E6%AC%A1%E7%82%B9%E5%87%BB"><span class="toc-number">2.</span> <span class="toc-text">我只想买一件，服务端可能收到好几次点击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E5%90%8E%E4%B8%80%E4%BB%BD%E5%BA%93%E5%AD%98%EF%BC%8C%E6%88%91%E4%BC%9A%E5%9C%A8%E4%B8%80%E4%B8%AA%E4%BA%8B%E5%8A%A1%E9%87%8C%E5%88%92%E8%B5%B0"><span class="toc-number">3.</span> <span class="toc-text">最后一份库存，我会在一个事务里划走</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E5%8E%BB%E5%80%92%E6%9D%AF%E6%B0%B4%E5%9B%9E%E6%9D%A5%EF%BC%8C%E8%AE%A2%E5%8D%95%E5%BA%94%E8%AF%A5%E6%9F%A5%E5%BE%97%E5%88%B0"><span class="toc-number">4.</span> <span class="toc-text">我去倒杯水回来，订单应该查得到</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%89%E4%BA%BA%E6%B2%A1%E4%BB%98%E6%AC%BE%EF%BC%8C%E8%BF%99%E4%B8%80%E4%BB%BD%E6%80%8E%E6%A0%B7%E6%89%8D%E8%83%BD%E6%94%BE%E5%9B%9E%E5%8E%BB%EF%BC%9F"><span class="toc-number">5.</span> <span class="toc-text">有人没付款，这一份怎样才能放回去？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E4%B8%AA%E6%B4%BB%E5%8A%A8%E4%B8%8A%E7%BA%BF%E5%89%8D%EF%BC%8C%E6%88%91%E4%BC%9A%E5%9C%A8%E6%89%8B%E6%9C%BA%E4%B8%8A%E8%AF%95%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">6.</span> <span class="toc-text">这个活动上线前，我会在手机上试什么？</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/21/flash-sale-high-concurrency/" title="秒杀系统设计：从点击抢购到库存确认">秒杀系统设计：从点击抢购到库存确认</a><time datetime="2026-11-21T16:11:56.000Z" title="发表于 2026-11-22 00:11:56">2026-11-22</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/19/linux-useradd-permissions-ssh-cron/" title="Linux 日常管理实战｜从 useradd 到共享目录和定时归档">Linux 日常管理实战｜从 useradd 到共享目录和定时归档</a><time datetime="2026-11-19T10:01:22.000Z" title="发表于 2026-11-19 18:01:22">2026-11-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/19/macos-brew-postgresql-redis/" title="macOS 用 Homebrew 本地部署 PostgreSQL 和 Redis">macOS 用 Homebrew 本地部署 PostgreSQL 和 Redis</a><time datetime="2026-11-19T09:50:22.000Z" title="发表于 2026-11-19 17:50:22">2026-11-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/06/shanghai-internship-notes/" title="在上海实习的日子，把成长写进日常">在上海实习的日子，把成长写进日常</a><time datetime="2026-11-06T04:00:00.000Z" title="发表于 2026-11-06 12:00:00">2026-11-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/05/macos-homebrew-guide/" title="macOS 上手 Homebrew：让软件安装和更新更简单">macOS 上手 Homebrew：让软件安装和更新更简单</a><time datetime="2026-11-05T10:30:00.000Z" title="发表于 2026-11-05 18:30:00">2026-11-05</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By binlicoder</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><div class="js-pjax"></div><script src="/js/article-layout.js?v=20261105i" defer></script><script src="/js/music-player.js?v=20261116a" defer></script><script src="/js/home-layout.js?v=20261105d" defer></script><script src="/js/error-layout.js?v=20261111a" defer></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
