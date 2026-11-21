@@ -26,6 +26,7 @@ let token = "",
   meta = {},
   baseSha = null,
   files = [],
+  coverFile = null,
   pending = null,
   taskTimer,
   previewRevision = 0;
@@ -92,6 +93,8 @@ function load(markdown, slug, sha) {
   meta = m;
   baseSha = sha;
   files = [];
+  coverFile = null;
+  el("coverPicker").value = "";
   pending = null;
   const data = {
     ...m,
@@ -109,13 +112,14 @@ function load(markdown, slug, sha) {
 }
 async function save() {
   sessionStorage.setItem("current", key);
-  await set(key, { values: values(), meta, baseSha, files, pending });
+  await set(key, { values: values(), meta, baseSha, files, coverFile, pending });
 }
 async function restore(k) {
   const d = await get(k);
   if (!d) return;
   key = k;
-  ({ meta, baseSha, files, pending } = d);
+  ({ meta, baseSha, files, coverFile = null, pending } = d);
+  el("coverPicker").value = "";
   for (const f of fields) el(f).value = d.values[f];
   el("slug").disabled = !!baseSha;
   sessionStorage.setItem("current", key);
@@ -186,7 +190,22 @@ function mapImages(body, urlFor) {
   }
   return body;
 }
+function renderCover() {
+  const path = el("cover").value;
+  let local = coverFile;
+  if (!local && path) {
+    try { local = match(path); } catch { /* An imported cover can be selected later. */ }
+  }
+  const src = local ? "data:" + local.type + ";base64," + local.contents
+    : /^(https?:\/\/|\/img\/)/i.test(path) ? path : "";
+  const img = el("coverPreview");
+  if (src && img.getAttribute("src") !== src) img.src = src;
+  if (!src) img.removeAttribute("src");
+  img.hidden = !src;
+  el("removeCover").hidden = !path;
+}
 async function render() {
+  renderCover();
   const rev = ++previewRevision;
   let body = el("body").value;
   try {
@@ -199,6 +218,8 @@ async function render() {
   if (rev === previewRevision) el("preview").innerHTML = html;
 }
 async function addFiles(input) {
+  const draftKey = key;
+  const isCover = input === "coverPicker";
   for (const file of Array.from(el(input).files) as File[]) {
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
       if (input === "folder") continue;
@@ -206,29 +227,27 @@ async function addFiles(input) {
     }
     if (file.size > 3145728) throw Error("单图上限 3 MiB");
     const path = file.webkitRelativePath || file.name;
-    const rest = files.filter((f) => f.path !== path);
-    if (rest.reduce((s, f) => s + f.size, 0) + file.size > 8388608)
+    const buf = await file.arrayBuffer();
+    const name = (await digest(buf)) + "." +
+      { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" }[file.type];
+    if (key !== draftKey) return;
+    const rest = isCover ? files : files.filter((f) => f.path !== path);
+    const sizes = new Map(rest.map(f => [f.name, f.size]));
+    if (!isCover && coverFile) sizes.set(coverFile.name, coverFile.size);
+    sizes.set(name, file.size);
+    if ([...sizes.values()].reduce((sum, size) => sum + size, 0) > 8388608)
       throw Error("配图总量上限 8 MiB");
-    const buf = await file.arrayBuffer(),
-      bytes = new Uint8Array(buf);
+    const bytes = new Uint8Array(buf);
     let binary = "";
     for (let i = 0; i < bytes.length; i += 8192)
       binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
-    files = [
-      ...rest,
-      {
-        path,
-        type: file.type,
-        size: file.size,
-        name:
-          (await digest(buf)) +
-          "." +
-          { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" }[
-            file.type
-          ],
-        contents: btoa(binary),
-      },
-    ];
+    const image = { path, type: file.type, size: file.size, name, contents: btoa(binary) };
+    if (isCover) {
+      coverFile = image;
+      el("cover").value = file.name;
+    } else {
+      files = [...rest, image];
+    }
   }
   pending = null;
   await save();
@@ -321,7 +340,7 @@ async function publish() {
         return "/img/" + v.slug + "/" + f.name;
       };
     const body = mapImages(v.body, urlFor),
-      cover = match(v.cover);
+      cover = coverFile || match(v.cover);
     pending = {
       id: crypto.randomUUID(),
       slug: v.slug,
@@ -341,7 +360,15 @@ for (const id of fields)
     await save();
     await render();
   });
-for (const id of ["folder", "images"]) bind(id, "change", () => addFiles(id));
+for (const id of ["folder", "images", "coverPicker"]) bind(id, "change", () => addFiles(id));
+bind("removeCover", "click", async () => {
+  coverFile = null;
+  el("cover").value = "";
+  el("coverPicker").value = "";
+  pending = null;
+  await save();
+  await render();
+});
 bind("fresh", "click", async () => {
   await drafts();
   load("", "", null);
