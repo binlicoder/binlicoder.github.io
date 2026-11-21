@@ -1,6 +1,7 @@
 ---
 title: 在 Mac 上用 Homebrew 安装 Redis
 date: 2026-11-22 04:41:32
+cover: /img/mac-homebrew-redis/64bfc44ebca1903f7a9fd8cabed733d7f1fb89e6088ac2d9365e6efe20d480c5.jpg
 ---
 # 在 Mac 上用 Homebrew 安装 Redis
 
