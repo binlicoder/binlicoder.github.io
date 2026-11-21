@@ -1,72 +1,157 @@
 <!doctype html>
 <html lang="zh-CN">
-<script type="module" crossorigin src="/admin/assets/index-mh7omrMb.js"></script>
-<link rel="stylesheet" crossorigin href="/admin/assets/index-CJzkCETf.css">
-
-  <meta charset="utf-8" /><meta
-    name="viewport"
-    content="width=device-width,initial-scale=1"
-  /><title>落笔之间 · 写作后台</title>
-  <header>
-    <strong>落笔之间</strong><span>写作后台</span
-    ><button id="login">GitHub 登录</button>
-  </header>
-  <main>
-    <aside>
-      <h2>文章</h2>
-      <input id="search" placeholder="搜索标题、分类或标签" />
-      <div id="posts"></div>
-      <button id="fresh">新建文章</button>
-      <h2>本机草稿</h2>
-      <div id="drafts"></div>
-      <h2>发布记录</h2>
-      <div id="jobs"></div>
-    </aside>
-    <section>
-      <h1>文章编辑</h1>
-      <div class="tools">
-        <label
-          >导入 Markdown<input
-            type="file"
-            id="importer"
-            accept=".md,.markdown" /></label
-        ><label
-          >添加配图<input
-            type="file"
-            id="images"
-            multiple
-            accept="image/png,image/jpeg,image/webp" /></label
-        ><label
-          >导入配图目录<input type="file" id="folder" webkitdirectory multiple
-        /></label>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#100d13" />
+    <title>落笔之间 · 内容管理</title>
+    <link rel="icon" href="/img/icons/favicon.ico" />
+    <script type="module" crossorigin src="/admin/assets/index-8Q2hN2Hm.js"></script>
+    <link rel="stylesheet" crossorigin href="/admin/assets/index-C8DZwf0j.css">
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <img src="/img/icons/apple-touch-icon.png" alt="" /><strong
+          >落笔之间</strong
+        ><span>管理后台</span>
       </div>
-      <div class="fields">
-        <label>标题<input id="title" /></label
-        ><label>文章短名<input id="slug" /></label
-        ><label>分类<input id="categories" /></label
-        ><label>标签<input id="tags" /></label
-        ><div class="cover-field">
-          <label>上传封面<input type="file" id="coverPicker" accept="image/png,image/jpeg,image/webp" /></label>
-          <small>PNG、JPEG 或 WebP，最大 3 MiB</small>
-          <input id="cover" type="hidden" />
-          <img id="coverPreview" alt="文章封面预览" hidden />
-          <button id="removeCover" type="button" hidden>移除封面</button>
-        </div
-        ><label>摘要<input id="description" /></label>
+      <div class="account">
+        <a href="/" target="_blank" rel="noopener">访问博客 ↗</a
+        ><button id="login">GitHub 登录</button>
       </div>
-      <div class="split">
-        <label>Markdown<textarea id="body"></textarea></label>
-        <div>
-          <b>预览</b>
-          <article id="preview"></article>
-        </div>
+    </header>
+    <main>
+      <aside>
+        <h2>内容管理</h2>
+        <nav aria-label="管理导航">
+          <button data-view="library" aria-current="page">文章管理</button
+          ><button data-view="editor">文章编辑</button
+          ><button data-view="categories">分类管理</button
+          ><button data-view="tags">标签管理</button
+          ><button data-view="draftView">本机草稿</button
+          ><button data-view="jobView">发布记录</button>
+        </nav>
+      </aside>
+      <div class="workspace">
+        <section id="library" class="view">
+          <div class="hero">
+            <div>
+              <h1>文章管理</h1>
+              <p>代码有迹，岁月有痕。</p>
+              <button class="primary" id="fresh">＋ 新建文章</button>
+            </div>
+          </div>
+          <div class="metrics">
+            <button data-go="library">
+              <span>文章总数</span><strong id="post-count">—</strong></button
+            ><button data-go="categories">
+              <span>分类</span><strong id="categories-count">—</strong></button
+            ><button data-go="tags">
+              <span>标签</span><strong id="tags-count">—</strong>
+            </button>
+          </div>
+          <div class="toolbar">
+            <h2>文章列表</h2>
+            <input
+              type="search"
+              id="search"
+              aria-label="搜索文章"
+              placeholder="搜索标题、分类或标签"
+            />
+          </div>
+          <div id="posts" class="cards"><p>登录 GitHub 后查看文章。</p></div>
+        </section>
+        <section id="taxonomy" class="view panel" hidden>
+          <h1 id="termTitle"></h1>
+          <form id="termForm">
+            <label
+              ><span id="termLabel"></span
+              ><input
+                id="termName"
+                required
+                maxlength="80"
+                autocomplete="off" /></label
+            ><button class="primary" type="submit">创建</button>
+          </form>
+          <p id="termHelp">
+            创建后即可在编辑器中选用，文章发布后会出现在博客归档中。
+          </p>
+          <div id="termList"></div>
+        </section>
+        <section id="draftView" class="view panel" hidden>
+          <h1>本机草稿</h1>
+          <div id="drafts" class="rows"></div>
+        </section>
+        <section id="jobView" class="view panel" hidden>
+          <h1>发布记录</h1>
+          <div id="jobs" class="rows"></div>
+        </section>
+        <section id="editor" class="view panel" hidden>
+          <h1>文章编辑</h1>
+          <div class="tools">
+            <label
+              >导入 Markdown<input
+                type="file"
+                id="importer"
+                accept=".md,.markdown" /></label
+            ><label
+              >添加配图<input
+                type="file"
+                id="images"
+                multiple
+                accept="image/png,image/jpeg,image/webp" /></label
+            ><label
+              >导入配图目录<input
+                type="file"
+                id="folder"
+                webkitdirectory
+                multiple
+            /></label>
+          </div>
+          <div class="fields">
+            <label>标题<input id="title" /></label
+            ><label>文章短名<input id="slug" /></label
+            ><label
+              >分类<input id="categories" /><select
+                id="choose-categories"
+                aria-label="选用已有分类"
+              ></select></label
+            ><label
+              >标签<input id="tags" /><select
+                id="choose-tags"
+                aria-label="选用已有标签"
+              ></select
+            ></label>
+            <div class="cover-field">
+              <label
+                >上传封面<input
+                  type="file"
+                  id="coverPicker"
+                  accept="image/png,image/jpeg,image/webp"
+              /></label>
+              <small>PNG、JPEG 或 WebP，最大 3 MiB</small>
+              <input id="cover" type="hidden" />
+              <img id="coverPreview" alt="文章封面预览" hidden />
+              <button id="removeCover" type="button" hidden>移除封面</button>
+            </div>
+            <label>摘要<input id="description" /></label>
+          </div>
+          <div class="split">
+            <label>Markdown<textarea id="body"></textarea></label>
+            <div>
+              <b>预览</b>
+              <article id="preview"></article>
+            </div>
+          </div>
+          <footer>
+            <button id="exporter">导出 Markdown</button
+            ><button id="publish">发布文章</button>
+          </footer>
+        </section>
+        <p role="status" id="notice"></p>
+        <div id="result" aria-live="polite"></div>
       </div>
-      <footer>
-        <button id="exporter">导出 Markdown</button
-        ><button id="publish">发布文章</button>
-      </footer>
-      <p role="status" id="notice"></p>
-      <div id="result"></div>
-    </section>
-  </main>
+    </main>
+  </body>
 </html>
