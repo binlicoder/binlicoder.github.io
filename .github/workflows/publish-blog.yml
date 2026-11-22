@@ -50,7 +50,11 @@ jobs:
         run: |
           git fetch origin main
           git worktree add --detach "$RUNNER_TEMP/blog-pages" origin/main
-          rsync -a --delete --exclude=.git public/ "$RUNNER_TEMP/blog-pages/"
+          # 兼容浏览器仍在使用的旧版后台入口。当前和后续入口内嵌 JS/CSS。
+          if [ ! -f "$RUNNER_TEMP/blog-pages/admin/assets/index-8Q2hN2Hm.js" ] || [ ! -f "$RUNNER_TEMP/blog-pages/admin/assets/index-C8DZwf0j.css" ]; then
+            git archive d58054cb7aa544e81220a39d0648be21d1e73eac admin/assets | tar -x -C "$RUNNER_TEMP/blog-pages"
+          fi
+          rsync -a --delete --filter='protect /admin/assets/***' --exclude=.git public/ "$RUNNER_TEMP/blog-pages/"
           touch "$RUNNER_TEMP/blog-pages/.nojekyll"
           cd "$RUNNER_TEMP/blog-pages"
           git config user.name "github-actions[bot]"

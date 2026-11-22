@@ -1,2 +1,7 @@
 import { defineConfig } from "vite";
-export default defineConfig({ base: "/admin/" });
+import { viteSingleFile } from "vite-plugin-singlefile";
+
+export default defineConfig({
+  base: "/admin/",
+  plugins: [viteSingleFile()],
+});
