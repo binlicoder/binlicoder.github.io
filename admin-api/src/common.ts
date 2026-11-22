@@ -54,14 +54,14 @@ export async function crypt(secret: string, value: string, encrypt: boolean) {
     await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data),
   );
 }
-export async function github(token: string, path: string, body?: unknown) {
+export async function github(token: string, path: string, body?: unknown, method = "POST") {
   const response = await fetch("https://api.github.com" + path, {
     headers: {
       Authorization: "Bearer " + token,
       "User-Agent": "blog-admin",
       Accept: "application/vnd.github+json",
     },
-    ...(body ? { method: "POST", body: JSON.stringify(body) } : {}),
+    ...(body ? { method, body: JSON.stringify(body) } : {}),
   });
   if (!response.ok)
     fail(response.status, "GitHub 请求失败 (" + response.status + ")");

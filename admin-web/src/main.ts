@@ -30,10 +30,10 @@ let token = "",
   pending = null,
   taskTimer,
   previewRevision = 0;
-async function request(path, data?) {
+async function request(path, data?, method = data ? "POST" : "GET") {
   if (!origin) throw Error("请配置 VITE_ADMIN_API_ORIGIN 后连接后台。");
   const response = await fetch(origin + path, {
-    method: data ? "POST" : "GET",
+    method,
     headers: {
       ...(data ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: "Bearer " + token } : {}),
@@ -443,7 +443,36 @@ function renderPosts() {
     ]
       .filter(Boolean)
       .join(" · ");
-    card.append(img, title, info);
+    const editHint = document.createElement("span");
+    editHint.className = "edit-hint";
+    editHint.textContent = "编辑文章 →";
+    card.append(img, title, info, editHint);
+    card.setAttribute("aria-label", "编辑《" + title.textContent + "》");
+    const item = document.createElement("div");
+    item.className = "post-item";
+    card.replaceWith(item);
+    item.append(card);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "delete-post";
+    remove.textContent = "删除";
+    remove.setAttribute("aria-label", "删除《" + title.textContent + "》");
+    remove.onclick = async () => {
+      if (!window.confirm("删除《" + title.textContent + "》？博客重新部署后，这篇文章将从网站下线。")) return;
+      remove.disabled = true;
+      try {
+        await request("/api/posts/" + p.id, { sha: p.sha }, "DELETE");
+        articles = articles.filter(article => article.id !== p.id);
+        renderPosts();
+        updateCatalog();
+        notice("已提交删除《" + title.textContent + "》，博客正在重新部署。");
+      } catch (err) {
+        notice(err.message);
+        remove.disabled = false;
+        try { await posts(); } catch { /* Keep the actionable deletion error visible. */ }
+      }
+    };
+    item.append(remove);
   }
 }
 async function posts() {

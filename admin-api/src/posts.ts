@@ -142,6 +142,26 @@ export async function api(r, e, sql, token) {
       return { kind: body.kind, name };
     }
   }
+  if (r.method === "DELETE") {
+    const slug = p.split("/").pop();
+    if (p !== "/api/posts/" + slug || !slugOK(slug)) fail(404, "文章不存在");
+    const body = await r.json().catch(() => null);
+    if (typeof body?.sha !== "string" || !/^[a-f0-9]{40}$/.test(body.sha))
+      fail(422, "缺少文章版本，请刷新列表后重试");
+    try {
+      const result = await github(token, "/repos/" + repo + "/contents/" + source(slug), {
+        message: "删除文章 " + slug,
+        branch,
+        sha: body.sha,
+      }, "DELETE");
+      return { commit: result.commit.sha };
+    } catch (err) {
+      if (err.status === 409 || err.status === 422)
+        fail(409, "文章或分支已更新，请重新查看文章后再确认删除");
+      if (err.status === 404) fail(404, "文章已不存在或当前账号无权访问");
+      throw err;
+    }
+  }
   if (r.method === "GET") {
     if (p === "/api/publishes")
       return (
@@ -162,6 +182,7 @@ export async function api(r, e, sql, token) {
               m = meta(new TextDecoder().decode(decode(data.content)));
             return {
               id: f.name.slice(0, -3),
+              sha: data.sha,
               title: m.title,
               cover: m.cover,
               date: m.date,

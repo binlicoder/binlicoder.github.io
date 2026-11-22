@@ -170,7 +170,7 @@ export default {
     headers.set("Cache-Control", "no-store");
     if (r.headers.get("Origin") === e.BLOG_ORIGIN) {
       headers.set("Access-Control-Allow-Origin", e.BLOG_ORIGIN);
-      headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+      headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Authorization,Content-Type");
     }
     return new Response(result.body, { status: result.status, headers });

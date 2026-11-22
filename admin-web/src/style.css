@@ -434,3 +434,31 @@ footer {
     min-width: 0;
   }
 }
+
+.post-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  min-width: 0;
+}
+.post-item > button:first-child { flex: 1; }
+.edit-hint {
+  color: var(--accent);
+  font-size: .88rem;
+  padding: 12px 70px 12px 15px;
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  align-self: stretch;
+}
+.cards .delete-post {
+  position: absolute;
+  bottom: 5px;
+  right: 7px;
+  padding: 5px 10px;
+  color: #edb8c3;
+  background: var(--panel);
+  border-radius: 8px;
+  font-size: .85rem;
+}
+.cards .delete-post:hover { background: #502c3b; }
