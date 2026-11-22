@@ -35,8 +35,8 @@
 @media(max-width:768px){#content-inner.home-three-column #recent-posts .recent-post-info{padding:20px}#content-inner.home-three-column .recent-post-items{gap:14px}}
 
 /* Homebrew 封面完整居中，背景用同一图片柔化填充。 */
-#body-wrap.post #page-header.homebrew-cover:before{content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(14,12,19,.72),rgba(14,12,19,.72)),var(--article-hero-image) center / cover no-repeat!important;filter:blur(18px);z-index:0}
-#body-wrap.post #page-header.homebrew-cover:after{inset:0;background-image:linear-gradient(rgba(14,12,19,.27),rgba(14,12,19,.52)),var(--article-hero-image);background-size:100% 100%,auto 100%;background-position:center;background-repeat:no-repeat;z-index:0}
+#body-wrap.post #page-header.has-article-cover:before{content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(14,12,19,.72),rgba(14,12,19,.72)),var(--article-hero-image) center / cover no-repeat!important;filter:blur(18px);z-index:0}
+#body-wrap.post #page-header.has-article-cover:after{inset:0;background-image:linear-gradient(rgba(14,12,19,.27),rgba(14,12,19,.52)),var(--article-hero-image);background-size:100% 100%,auto 100%;background-position:center;background-repeat:no-repeat;z-index:0}
 
 /* 文章页的彩色圆角横幅 */
 #body-wrap.post #page-header{height:clamp(360px,65vh,760px)!important;background:#090909!important}
@@ -47,9 +47,9 @@
 #body-wrap.post .article-hero-date{margin-top:24px}
 @media(max-width:768px){#body-wrap.post #page-header{height:360px!important}#body-wrap.post #page-header:after{inset:45px 0 0;background-size:auto 100%}#body-wrap.post .article-hero{inset:60px 20px 0}#body-wrap.post .article-hero-title{font-size:1.8rem}}
 
-/* Homebrew 文章横幅使用封面，完整显示主体并柔化两侧。 */
-#body-wrap.post #page-header.homebrew-cover:before{display:block;content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(12,12,15,.58),rgba(12,12,15,.68)),url('/img/homebrew-cover.png') center / cover no-repeat!important;filter:blur(20px);z-index:0}
-#body-wrap.post #page-header.homebrew-cover:after{inset:0;background-image:linear-gradient(rgba(12,12,15,.24),rgba(12,12,15,.48)),url('/img/homebrew-cover.png');background-position:center;background-size:100% 100%,auto 100%;background-repeat:no-repeat;opacity:1}
+/* 文章横幅使用封面，完整显示主体并柔化两侧。 */
+#body-wrap.post #page-header.has-article-cover:before{display:block;content:"";position:absolute;inset:-24px;background:linear-gradient(rgba(12,12,15,.58),rgba(12,12,15,.68)),var(--article-hero-image) center / cover no-repeat!important;filter:blur(20px);z-index:0}
+#body-wrap.post #page-header.has-article-cover:after{inset:0;background-image:linear-gradient(rgba(12,12,15,.24),rgba(12,12,15,.48)),var(--article-hero-image);background-position:center;background-size:100% 100%,auto 100%;background-repeat:no-repeat;opacity:1}
 
 /* 404 页：头像引导型（左头像 + 右文案 + 两个出口） */
 #body-wrap.type-404{display:flex;flex-direction:column;min-height:100vh}
