@@ -7,7 +7,7 @@ tags:
   - Git
   - 入门教程
   - 开发工具
-cover: https://images.unsplash.com/photo-1649451844897-8699a1d6d96d?auto=format&fit=crop&w=1600&q=85
+cover: /img/git-basics/51a8a5add86a0793240615ec78c77f6d05afdc2d79058992ab70304887f879b5.jpg
 ---
 
 刚开始实习时，我对 Git 的理解只有一句话：写完代码记得 `add`、`commit`、`push`。后来真正参与协作才发现，理解每一步在做什么，比背命令更重要。
