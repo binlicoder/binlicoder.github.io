@@ -15,7 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const date = layout.querySelector('.post-meta-date-created');
   if (header && title) {
     const coverImage = document.querySelector('meta[property="og:image"]')?.content;
-    if (coverImage && new URL(coverImage, location.href).pathname === '/img/homebrew-cover.png') header.classList.add('homebrew-cover');
+    if (coverImage) {
+      const image = new URL(coverImage, location.href);
+      if (['http:', 'https:'].includes(image.protocol)) {
+        header.style.setProperty('--article-hero-image', 'url("' + image.href.replaceAll('"', '%22') + '")');
+        header.classList.add('has-article-cover');
+      }
+    }
     const hero = document.createElement('div');
     hero.className = 'article-hero';
     const heading = document.createElement('div');
