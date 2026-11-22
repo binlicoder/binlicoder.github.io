@@ -7,7 +7,7 @@ tags:
   - Linux
   - SSH
   - 系统管理
-cover: /img/linux-useradd-permissions-ssh-cron/f31740b876a73041d7618434f93c6a008c66d5aa7cf08a8207afde40fc2af155.jpg
+cover: /img/linux-useradd-permissions-ssh-cron/1d1adec9218e7be8c5d702aac6fd807227e5d976062ea8e21ad62e7985db3865.jpg
 ---
 
 新同事需要上服务器更新项目资料。给她开一个独立的账号，让她用自己的 SSH 密钥登录，再通过用户组开放一个共享目录。最后，把共享目录的日常归档交给定时任务。这个流程可以直接用在小团队的开发机上。
